@@ -18,13 +18,13 @@ Bun 1.2+ and an OpenAI-compatible backend:
 bun install
 
 # Ollama
-bun start -- --backend http://127.0.0.1:11434/v1 --model llama3.2
+bun start --backend http://127.0.0.1:11434/v1 --model llama3.2
 
 # llama.cpp, grammar-constrained
-bun start -- --backend http://127.0.0.1:8081/v1 --model <id> --grammar grammar/compact.gbnf --profile compact
+bun start --backend http://127.0.0.1:8081/v1 --model <id> --grammar grammar/compact.gbnf --profile compact
 
 # hosted: no grammar, so the sanitizer and CSP carry the safety
-OPENAI_API_KEY=... bun start -- --backend https://api.openai.com/v1 --model <id> --key-env OPENAI_API_KEY
+OPENAI_API_KEY=... bun start --backend https://api.openai.com/v1 --model <id> --key-env OPENAI_API_KEY
 ```
 
 Open http://127.0.0.1:8090/. Switch between rendered and source view. Backend options go in `--extra '{"chat_template_kwargs":{"enable_thinking":false}}'`.
