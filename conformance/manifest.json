@@ -1,0 +1,494 @@
+{
+ "about": "Language-neutral conformance suite: any implementation of the subset (validator, sanitizer, renderer) must agree with this manifest. 'valid' entries must be accepted exactly in the listed profiles (and rejected in the others); with widgets:true they must also be rejected when widgets are off. 'invalid' entries must be rejected in every profile; kinds is the set of violation kinds the reference validator reports under the strict profile (informational for other implementations).",
+ "cases": [
+  {
+   "file": "attack/aside-class-break.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "value"
+   ]
+  },
+  {
+   "file": "attack/base-hijack.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element",
+    "href"
+   ]
+  },
+  {
+   "file": "attack/body-onload.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ]
+  },
+  {
+   "file": "attack/button-formaction.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "attribute"
+   ]
+  },
+  {
+   "file": "attack/code-class-break.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "value"
+   ]
+  },
+  {
+   "file": "attack/conditional-comment.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "comment"
+   ]
+  },
+  {
+   "file": "attack/dangling-markup.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "end-tag",
+    "structure"
+   ],
+   "note": "answer cut off inside a tag (compact once accepted this)"
+  },
+  {
+   "file": "attack/details-ontoggle.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "attribute"
+   ]
+  },
+  {
+   "file": "attack/event-attr-case.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "attribute"
+   ]
+  },
+  {
+   "file": "attack/form-action.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element",
+    "missing"
+   ]
+  },
+  {
+   "file": "attack/href-data-uri.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "href"
+   ]
+  },
+  {
+   "file": "attack/href-entity.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "href"
+   ]
+  },
+  {
+   "file": "attack/href-leading-space.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "href"
+   ]
+  },
+  {
+   "file": "attack/href-mixed-case.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "href"
+   ]
+  },
+  {
+   "file": "attack/href-protocol-rel.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "href"
+   ]
+  },
+  {
+   "file": "attack/href-tab.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "href"
+   ]
+  },
+  {
+   "file": "attack/href-with-handler.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "attribute"
+   ]
+  },
+  {
+   "file": "attack/iframe-srcdoc.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ]
+  },
+  {
+   "file": "attack/img-onerror.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ]
+  },
+  {
+   "file": "attack/input-autofocus.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ]
+  },
+  {
+   "file": "attack/link-stylesheet.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ]
+  },
+  {
+   "file": "attack/math-mxss.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element",
+    "text",
+    "unbalanced"
+   ]
+  },
+  {
+   "file": "attack/meta-refresh.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ]
+  },
+  {
+   "file": "attack/noscript-mxss.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element",
+    "text",
+    "unbalanced"
+   ]
+  },
+  {
+   "file": "attack/object-embed.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ]
+  },
+  {
+   "file": "attack/script-src.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ]
+  },
+  {
+   "file": "attack/script-uppercase.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ]
+  },
+  {
+   "file": "attack/style-import.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ]
+  },
+  {
+   "file": "attack/svg-onload.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ]
+  },
+  {
+   "file": "attack/svg-style-mxss.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element",
+    "text"
+   ]
+  },
+  {
+   "file": "attack/svg-xlink-href.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "attribute",
+    "element"
+   ]
+  },
+  {
+   "file": "attack/template-no-widget.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element",
+    "unbalanced"
+   ]
+  },
+  {
+   "file": "bad/aside-kind.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "value"
+   ],
+   "note": "aside class outside note/tip/warn"
+  },
+  {
+   "file": "bad/bare-text.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "text"
+   ],
+   "note": "text directly in the answer root"
+  },
+  {
+   "file": "bad/compact-inline-omitted.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "end-tag",
+    "structure",
+    "unbalanced"
+   ],
+   "note": "an end tag omitted on an inline element"
+  },
+  {
+   "file": "bad/empty-code.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "empty-code"
+   ],
+   "note": "pre>code with no content"
+  },
+  {
+   "file": "bad/event-attr.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "attribute"
+   ],
+   "note": "onclick handler"
+  },
+  {
+   "file": "bad/h1.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ],
+   "note": "h1 is reserved for the page"
+  },
+  {
+   "file": "bad/http-link.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "href"
+   ],
+   "note": "plain http link"
+  },
+  {
+   "file": "bad/img-exfil.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ],
+   "note": "img would leak data through its URL"
+  },
+  {
+   "file": "bad/js-href.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "href"
+   ],
+   "note": "javascript: link"
+  },
+  {
+   "file": "bad/raw-lt.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "text"
+   ],
+   "note": "unescaped < in text"
+  },
+  {
+   "file": "bad/script.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "element"
+   ],
+   "note": "script element"
+  },
+  {
+   "file": "bad/style-attr.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "attribute"
+   ],
+   "note": "style attribute"
+  },
+  {
+   "file": "bad/table-without-tbody.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "end-tag",
+    "structure"
+   ],
+   "note": "table rows outside thead/tbody"
+  },
+  {
+   "file": "bad/ul-with-paragraph.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "structure"
+   ],
+   "note": "p directly inside ul"
+  },
+  {
+   "file": "bad/unclosed.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "unbalanced"
+   ],
+   "note": "unclosed element"
+  },
+  {
+   "file": "bad/widget-in-strict.html",
+   "expect": "invalid",
+   "profiles": [],
+   "kinds": [
+    "widget"
+   ]
+  },
+  {
+   "file": "compact/callout-menu.html",
+   "expect": "valid",
+   "profiles": [
+    "compact"
+   ]
+  },
+  {
+   "file": "compact/definitions.html",
+   "expect": "valid",
+   "profiles": [
+    "compact"
+   ]
+  },
+  {
+   "file": "compact/list.html",
+   "expect": "valid",
+   "profiles": [
+    "compact"
+   ]
+  },
+  {
+   "file": "compact/nested.html",
+   "expect": "valid",
+   "profiles": [
+    "compact"
+   ]
+  },
+  {
+   "file": "compact/table.html",
+   "expect": "valid",
+   "profiles": [
+    "compact"
+   ]
+  },
+  {
+   "file": "good/code-spaces.html",
+   "expect": "valid",
+   "profiles": [
+    "strict",
+    "compact"
+   ]
+  },
+  {
+   "file": "good/entities.html",
+   "expect": "valid",
+   "profiles": [
+    "strict",
+    "compact"
+   ]
+  },
+  {
+   "file": "good/minimal.html",
+   "expect": "valid",
+   "profiles": [
+    "strict",
+    "compact"
+   ]
+  },
+  {
+   "file": "good/rich.html",
+   "expect": "valid",
+   "profiles": [
+    "strict",
+    "compact"
+   ]
+  },
+  {
+   "file": "widgets/calc.html",
+   "expect": "valid",
+   "profiles": [
+    "strict",
+    "compact"
+   ],
+   "widgets": true
+  }
+ ]
+}

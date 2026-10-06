@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"strings"
 
-	"html-answers/spec"
+	"tamechat/spec"
 )
 
 var (

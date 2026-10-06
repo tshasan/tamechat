@@ -101,6 +101,25 @@ check('Stop ends the stream and keeps the partial answer', /Stopped/.test(await 
 // Console errors are checked before the deliberate refusals below, which the browser logs as errors.
 check('no console errors', errors.length === 0, errors.join(' | '));
 
+// ---- the exported file works with zero client code (the format's focal-point claim)
+await page.selectOption('#theme', 'pico');
+const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#export')]);
+const exported = await (await import('node:fs/promises')).readFile(await dl.path(), 'utf8');
+const ctxNoJs = await browser.newContext({ javaScriptEnabled: false });
+const flat = await ctxNoJs.newPage();
+await flat.setContent(exported);
+const facts = await flat.evaluate(() => ({
+  tables: document.querySelectorAll('table').length, tbody: document.querySelectorAll('tbody').length, scripts: document.querySelectorAll('script').length,
+  handlers: [...document.querySelectorAll('*')].filter((e) => [...e.attributes].some((a) => /^on/i.test(a.name))).length,
+  h2: [...document.querySelectorAll('h2')].map((h) => h.textContent), csp: !!document.querySelector('meta[http-equiv="Content-Security-Policy"]'),
+  pico: getComputedStyle(document.body).getPropertyValue('--pico-font-family') !== '' || /pico/i.test(document.querySelector('style').textContent.slice(0, 400)),
+}));
+check('exported file opens with JavaScript disabled and shows the table', facts.tables === 1 && facts.tbody === 1, JSON.stringify(facts));
+check('exported file has no script, no handlers, and a CSP', facts.scripts === 0 && facts.handlers === 0 && facts.csp);
+check('exported file carries the questions and the chosen theme', facts.h2.includes('compact please') && facts.pico, facts.h2.join(' | '));
+check('exported file does not contain the attack payloads', !/evil\.example|__pwned|javascript:/i.test(exported.replace(/Content-Security-Policy[^>]*>/, '')));
+await ctxNoJs.close();
+
 // ---- the server's guards
 const r1 = await page.evaluate(async (b) => (await fetch(b + '/api/chat', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: '{"messages":[{"role":"user","content":"x"}]}' })).status, BASE);
 check('a POST without a JSON content type is refused', r1 === 403, String(r1));

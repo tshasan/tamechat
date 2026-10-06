@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"html-answers/internal/md"
-	"html-answers/spec"
+	"tamechat/internal/md"
+	"tamechat/spec"
 )
 
 func TestCompactExamples(t *testing.T) {

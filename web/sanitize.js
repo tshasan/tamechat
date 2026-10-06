@@ -6,7 +6,8 @@
 export function sanitize(subset, root) {
   for (const el of [...root.querySelectorAll('*')]) {
     const tag = el.localName;
-    if (!subset.tags.has(tag) || (tag === 'template' && !el.hasAttribute('data-widget'))) {
+    // Only HTML elements: an SVG or MathML element can share a local name with an allowed one (<a>).
+    if (el.namespaceURI !== 'http://www.w3.org/1999/xhtml' || !subset.tags.has(tag) || (tag === 'template' && !el.hasAttribute('data-widget'))) {
       el.remove();
       continue;
     }

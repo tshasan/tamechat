@@ -1,6 +1,6 @@
 # Grammar shapes: what does the answer format cost, and what does it buy?
 
-> This experiment ran in the prototype this repository was extracted from. The data (`answers.jsonl`, `judge.jsonl`, `summary.json`) is complete. `bench.py` expects that prototype's layout (its bridge, system prompt and grammar variants), so it is kept as a record of the method, not as a tool you can run here.
+> This experiment ran in the prototype this repository was extracted from. The data (`answers.jsonl`, `judge.jsonl`, `summary.json`, `report.md`) is complete, and the prompts are `corpus/prompts.json`. The harness is not shipped: it depended on the prototype's layout, and the method is described below.
 
 Qwen3.6-35B-A3B (IQ4_XS), thinking off, temperature 0.7, 12 prompts, one answer per prompt per arm, the same seed for a prompt in every arm. 12 arms, 144 answers. Data is in `results/` (`answers.jsonl`, `judge.jsonl`, `summary.json`, `report.md`). 
 
@@ -39,7 +39,7 @@ Qwen3.6-35B-A3B (IQ4_XS), thinking off, temperature 0.7, 12 prompts, one answer 
 
 - **Do not ship grammar-only compaction.** It either truncates answers or degenerates. Get compact output by fine-tuning on compact examples, with the grammar relaxed to allow them.
 - **If a grammar must forbid a token the model wants, give it no early exit** (end-with-a-closing-block) and test answer length, not just validity.
-- **The case for the web platform is not token cost.** Markdown is cheaper per word and, on this sample, not clearly worse. The platform's case is elsewhere: rendering a model's answer takes 4.7 KB with no third-party code (the prototype's `render.js` + `sanitize.js`) against about 69 KB for a typical Markdown parser plus sanitizer (marked 40 KB + DOMPurify 29 KB, minified, measured from npm), and the model can emit `<details>`, callouts, tables with captions and sandboxed widgets that Markdown has no syntax for. DOMPurify is far more battle-tested than the 1.4 KB allowlist here, which is a thin layer over the grammar.
+- **The case for the web platform is not token cost.** Markdown is cheaper per word and, on this sample, not clearly worse. The platform's case is elsewhere: rendering a model's answer takes 8 KB with no third-party code (`web/render.js`, `sanitize.js`, `scanner.js`, `subset.js`) against about 69 KB for a typical Markdown parser plus sanitizer (marked 40 KB + DOMPurify 29 KB, minified, measured from npm), and the model can emit `<details>`, callouts, tables with captions and sandboxed widgets that Markdown has no syntax for. DOMPurify is far more battle-tested than the 1.4 KB allowlist here, which is a thin layer over the grammar.
 
 ## Method notes and known weaknesses
 
@@ -47,4 +47,4 @@ Qwen3.6-35B-A3B (IQ4_XS), thinking off, temperature 0.7, 12 prompts, one answer 
 - The "runaway" count (answer hit the 900-token limit) counts the hiking-checklist prompt in several arms; it is probably a long answer, not a loop.
 - The judge sees plain-text renderings in both orders to cancel position bias; HTML and Markdown flatten slightly differently, which can favour one.
 - Only one model, one temperature, one sample per prompt. Token counts per answer vary by roughly 10% between samples.
-- Telemetry: every answer and judge call is an OpenTelemetry trace (`bench.answer`, `bench.judge`) sent through the bridge, so it shows on `/debug.html` and in any OTLP backend. The debug page keeps the newest 100; a collector keeps all. The first 84 answers were backfilled with reconstructed timing (`bench.reconstructed_timing`).
+- The prototype recorded every answer and judge call as an OpenTelemetry trace; that tooling is not part of this repository.

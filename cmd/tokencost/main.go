@@ -19,10 +19,10 @@ import (
 	"sort"
 	"strings"
 
-	"html-answers/internal/compact"
-	"html-answers/internal/md"
-	"html-answers/internal/tokens"
-	"html-answers/spec"
+	"tamechat/internal/compact"
+	"tamechat/internal/md"
+	"tamechat/internal/tokens"
+	"tamechat/spec"
 )
 
 var tagRe = regexp.MustCompile(`</?[a-zA-Z][a-zA-Z0-9]*[^<>]*>`)

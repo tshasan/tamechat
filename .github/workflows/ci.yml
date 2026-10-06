@@ -30,4 +30,6 @@ jobs:
           python3 test/e2e/fakebackend.py 8099 &
           FAKE_KEY=k go run ./cmd/serve -addr 127.0.0.1:8090 -backend http://127.0.0.1:8099/v1 -model fake -key-env FAKE_KEY &
           sleep 8
-          FAKE_KEY=k node test/e2e/e2e.mjs
+          export BASE=http://127.0.0.1:8090 FAKE=http://127.0.0.1:8099 FAKE_KEY=k
+          node test/e2e/e2e.mjs
+          node test/redteam/redteam.mjs

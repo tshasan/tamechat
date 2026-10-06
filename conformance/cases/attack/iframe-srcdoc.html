@@ -1,0 +1,1 @@
+<iframe srcdoc="<script>parent.__pwned=1</script>"></iframe>

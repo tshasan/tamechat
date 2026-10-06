@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"html-answers/spec"
+	"tamechat/spec"
 )
 
 // A stand-in OpenAI-compatible backend that records what it was sent.

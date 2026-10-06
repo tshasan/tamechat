@@ -23,7 +23,9 @@ import (
 	"strings"
 	"time"
 
-	"html-answers/spec"
+	"tamechat/corpus"
+
+	"tamechat/spec"
 )
 
 func main() {
@@ -113,7 +115,7 @@ func sample(args []string) int {
 	model := fs.String("model", "", "model id")
 	keyEnv := fs.String("key-env", "", "environment variable holding the API key")
 	profile := fs.String("profile", "strict", "strict or compact")
-	prompts := fs.String("prompts", "corpus/prompts.json", "JSON array of {q, needs}")
+	prompts := fs.String("prompts", "", "JSON array of {q, needs} (default: the built-in prompts)")
 	n := fs.Int("n", 1, "samples per prompt")
 	grammar := fs.String("grammar", "", "GBNF file to send (llama.cpp only)")
 	maxTokens := fs.Int("max-tokens", 900, "max_tokens per answer")
@@ -124,10 +126,13 @@ func sample(args []string) int {
 	fs.Parse(args)
 
 	s := mustSubset()
-	raw, err := os.ReadFile(*prompts)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+	raw := corpus.Prompts
+	if *prompts != "" {
+		var err error
+		if raw, err = os.ReadFile(*prompts); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
 	}
 	var ps []prompt
 	if err := json.Unmarshal(raw, &ps); err != nil {

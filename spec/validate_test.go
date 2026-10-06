@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -24,6 +25,17 @@ func kinds(vs []Violation) string {
 		k = append(k, v.Kind)
 	}
 	return strings.Join(k, ",")
+}
+
+func kindSet(vs []Violation) []string {
+	var k []string
+	for _, v := range vs {
+		if !slices.Contains(k, v.Kind) {
+			k = append(k, v.Kind)
+		}
+	}
+	slices.Sort(k)
+	return k
 }
 
 func TestValidateSmallCases(t *testing.T) {
@@ -89,54 +101,65 @@ func TestValidateSmallCases(t *testing.T) {
 	}
 }
 
-func read(t *testing.T, dir string) map[string]string {
-	t.Helper()
-	files, _ := filepath.Glob(filepath.Join("..", "conformance", "cases", dir, "*.html"))
-	if len(files) == 0 {
-		t.Fatalf("no cases in %s", dir)
-	}
-	out := map[string]string{}
-	for _, f := range files {
-		b, err := os.ReadFile(f)
-		if err != nil {
-			t.Fatal(err)
-		}
-		out[filepath.Base(f)] = string(b)
-	}
-	return out
+type manifestCase struct {
+	File     string    `json:"file"`
+	Expect   string    `json:"expect"`
+	Profiles []Profile `json:"profiles"`
+	Widgets  bool      `json:"widgets"`
+	Kinds    []string  `json:"kinds"`
 }
 
-func TestConformanceCases(t *testing.T) {
+func TestConformanceManifest(t *testing.T) {
 	s := load(t)
-	for name, src := range read(t, "good") {
+	root := filepath.Join("..", "conformance")
+	raw, err := os.ReadFile(filepath.Join(root, "manifest.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var m struct {
+		Cases []manifestCase `json:"cases"`
+	}
+	if err := json.Unmarshal(raw, &m); err != nil {
+		t.Fatal(err)
+	}
+	listed := map[string]bool{}
+	for _, c := range m.Cases {
+		listed[c.File] = true
+		b, err := os.ReadFile(filepath.Join(root, "cases", c.File))
+		if err != nil {
+			t.Errorf("manifest lists %s: %v", c.File, err)
+			continue
+		}
+		src := string(b)
 		for _, p := range []Profile{Strict, Compact} {
-			if vs := s.Validate(src, Options{Profile: p}); len(vs) > 0 {
-				t.Errorf("good/%s should be valid in the %s profile: %v", name, p, vs)
+			vs := s.Validate(src, Options{Profile: p, Widgets: c.Widgets})
+			want := c.Expect == "valid" && slices.Contains(c.Profiles, p)
+			if want && len(vs) > 0 {
+				t.Errorf("%s should be valid in %s: %v", c.File, p, vs)
+			}
+			if !want && len(vs) == 0 {
+				t.Errorf("%s should be invalid in %s", c.File, p)
+			}
+		}
+		if c.Widgets && len(s.Validate(src, Options{})) == 0 {
+			t.Errorf("%s should be rejected when widgets are off", c.File)
+		}
+		if c.Expect == "invalid" {
+			got := kindSet(s.Validate(src, Options{Profile: Strict}))
+			if !slices.Equal(got, c.Kinds) {
+				t.Errorf("%s: kinds %v, manifest says %v", c.File, got, c.Kinds)
 			}
 		}
 	}
-	for name, src := range read(t, "widgets") {
-		if vs := s.Validate(src, Options{Widgets: true}); len(vs) > 0 {
-			t.Errorf("widgets/%s should be valid with widgets allowed: %v", name, vs)
-		}
-		if vs := s.Validate(src, Options{}); len(vs) == 0 {
-			t.Errorf("widgets/%s should be rejected when widgets are not allowed", name)
-		}
-	}
-	for name, src := range read(t, "bad") {
-		for _, p := range []Profile{Strict, Compact} {
-			if vs := s.Validate(src, Options{Profile: p}); len(vs) == 0 {
-				t.Errorf("bad/%s should be invalid in the %s profile", name, p)
-			}
+	files, _ := filepath.Glob(filepath.Join(root, "cases", "*", "*.html"))
+	for _, f := range files {
+		rel, _ := filepath.Rel(filepath.Join(root, "cases"), f)
+		if !listed[filepath.ToSlash(rel)] {
+			t.Errorf("%s exists but is not in the manifest", rel)
 		}
 	}
-	for name, src := range read(t, "compact") {
-		if vs := s.Validate(src, Options{Profile: Compact}); len(vs) > 0 {
-			t.Errorf("compact/%s should be valid in the compact profile: %v", name, vs)
-		}
-		if vs := s.Validate(src, Options{Profile: Strict}); len(vs) == 0 {
-			t.Errorf("compact/%s uses omissions, so the strict profile should reject it", name)
-		}
+	if len(files) != len(m.Cases) {
+		t.Errorf("%d case files, %d manifest entries", len(files), len(m.Cases))
 	}
 }
 
@@ -269,6 +292,17 @@ func TestGrammarMatchesSubset(t *testing.T) {
 		for a := range defined {
 			if !attrs[a] {
 				t.Errorf("%s never produces attribute %q, which the subset defines", name, a)
+			}
+		}
+	}
+}
+
+func TestInputEndingMidTagIsInvalid(t *testing.T) {
+	sub := load(t)
+	for _, src := range []string{"<p>text <img src='https://evil.example/?d=", "<p>ok</p><a href=\"https://x", "<p>ok</p><"} {
+		for _, prof := range []Profile{Strict, Compact} {
+			if vs := sub.Validate(src, Options{Profile: prof}); len(vs) == 0 {
+				t.Errorf("%s accepted %q", prof, src)
 			}
 		}
 	}

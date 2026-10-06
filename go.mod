@@ -1,4 +1,4 @@
-module html-answers
+module tamechat
 
 go 1.26.0
 

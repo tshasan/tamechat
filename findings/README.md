@@ -1,6 +1,6 @@
 # Findings
 
-Three things were measured while building this. Each says what was measured, how, and how much to trust it. Everything here is a pilot on one model (Qwen3.6-35B-A3B, 4-bit) and a dozen prompts; none of it is a benchmark.
+Four things were measured while building this. Each says what was measured, how, and how much to trust it. Everything here is a pilot on one model (Qwen3.6-35B-A3B, 4-bit) and a dozen prompts; none of it is a benchmark.
 
 ## 1. Compact HTML costs 15% fewer tokens than strict, and Markdown parity is a projection
 
@@ -43,9 +43,24 @@ This is a general property of constrained decoding, not of HTML: test answer len
 
 ## 3. Rendering and sanitizing an answer takes 8 KB here, against about 69 KB for a typical Markdown stack
 
-`render.js`, `sanitize.js`, `scanner.js` and `subset.js` come to 7,985 bytes (3,037 gzipped), with no third-party code. A Markdown parser plus a sanitizer from npm, minified, is marked 39.9 KB plus DOMPurify 28.9 KB. The browser's own HTML parser does the parsing, including putting omitted end tags back. (The prototype this was extracted from managed 4.7 KB; the extra here is the scanner that understands the compact profile and the loader that reads `subset.json`.)
+`render.js`, `sanitize.js`, `scanner.js` and `subset.js` come to 8,141 bytes (3,128 gzipped), with no third-party code. A Markdown parser plus a sanitizer from npm, minified, is marked 39.9 KB plus DOMPurify 28.9 KB. The browser's own HTML parser does the parsing, including putting omitted end tags back. 
 
 This is a size comparison, not a quality one. DOMPurify has years of review behind it; the allowlist here is a thin layer over the grammar and the Content-Security-Policy.
+
+## 4. Each safety layer, attacked alone
+
+`test/redteam/redteam.mjs` runs 32 attack documents (`conformance/cases/attack/`) against one layer at a time in a real browser, so a hole in one layer cannot hide behind the others. A positive control (the same documents as raw `innerHTML`, no defence) must show holes, or the run fails: it shows 22.
+
+| layer | result |
+|---|---|
+| validator (both profiles) | rejects all 32 |
+| sanitizer alone, no CSP, whole and streamed one character at a time | contains all 32: no script ran, no request left, no navigation, no handler or `javascript:` URL left in the DOM |
+| CSP alone, raw `innerHTML` | stops every script and every request, but not `<meta http-equiv=refresh>`, which navigates the page away; 18 documents leave inert handlers in the DOM that only the CSP keeps from running |
+| widget sandbox, hostile script inside | `fetch`, `sendBeacon`, `WebSocket`, image beacon, dynamic `import`, `parent.document`, `top.document`, `localStorage`, cookies, `indexedDB`, `window.open` and `top.location` are all blocked |
+
+Two real bugs came out of it, both fixed with a regression test: the sanitizer accepted an SVG `<a>` (same local name as an allowed element) and then crashed on it, and the compact validator accepted an answer cut off in the middle of a tag.
+
+What it does not show: that the layers are independent (the sanitizer mirrors the grammar, so they are correlated by design), or that a browser bug cannot get through. And by design a widget can call `sendPrompt`, which speaks as the user: capped at 2,000 characters, no confirmation. That is a capability, not a leak, but it is the thing to review before enabling widgets for untrusted models.
 
 ## Not shown
 

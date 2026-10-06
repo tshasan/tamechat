@@ -24,8 +24,8 @@ import (
 	"os"
 	"strings"
 
-	"html-answers/spec"
-	"html-answers/web"
+	"tamechat/spec"
+	"tamechat/web"
 )
 
 type server struct {

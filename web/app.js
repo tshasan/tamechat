@@ -98,7 +98,7 @@ function addTurn(text) {
   art.querySelector('.user').textContent = text;
   log.append(art);
   art.scrollIntoView({ block: 'end' });
-  const turn = { html: '', frame: null, frameReady: false, article: art,
+  const turn = { question: text, html: '', frame: null, frameReady: false, article: art,
     answer: art.querySelector('.answer'), rendered: art.querySelector('.rendered'), source: art.querySelector('.source'),
     thinking: art.querySelector('.thinking'), thinkingText: art.querySelector('.thinking pre'), meta: art.querySelector('.meta') };
   turn.answer.hidden = theme !== 'default';
@@ -208,6 +208,40 @@ function setTheme(name) {
   }
 }
 
+// ---------------------------------------------------------------- export
+// The conversation as one static .html file: sanitized answers plus the chosen theme's CSS, no
+// script, and a CSP that forbids everything but inline styles. It is the same answer HTML the
+// model wrote, so it needs no client code of ours to read, which is the point of the format.
+
+async function exportHTML() {
+  const doc = document.implementation.createHTMLDocument('tamechat conversation');
+  const meta = (attrs) => { const m = doc.createElement('meta'); Object.entries(attrs).forEach(([k, v]) => m.setAttribute(k, v)); doc.head.append(m); };
+  meta({ charset: 'utf-8' });
+  meta({ name: 'viewport', content: 'width=device-width, initial-scale=1' });
+  meta({ 'http-equiv': 'Content-Security-Policy', content: "default-src 'none'; style-src 'unsafe-inline'; img-src data:" });
+  const href = THEMES[theme][1];
+  let css = 'body{max-width:42rem;margin:2rem auto;padding:0 1rem;font:16px/1.55 system-ui,sans-serif}';
+  if (href) css = await fetch(href).then((r) => r.text()).catch(() => css);
+  doc.head.append(Object.assign(doc.createElement('style'), { textContent: css }));
+  const main = doc.createElement('main');
+  for (const t of turns) {
+    if (!t.html) continue;
+    const q = doc.createElement('h2'); q.textContent = t.question;
+    const tpl = document.createElement('template');
+    tpl.innerHTML = t.html;
+    sanitize(subset, tpl.content);
+    for (const w of tpl.content.querySelectorAll('template[data-widget]')) w.remove();
+    const sec = doc.createElement('section');
+    sec.append(q, doc.importNode(tpl.content, true));
+    main.append(sec);
+  }
+  doc.body.append(main);
+  const out = '<!doctype html>\n' + doc.documentElement.outerHTML + '\n';
+  const a = Object.assign(document.createElement('a'), { download: 'tamechat-conversation.html', href: URL.createObjectURL(new Blob([out], { type: 'text/html' })) });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 // ---------------------------------------------------------------- start
 
 for (const [k, [label]] of Object.entries(THEMES)) $('#theme').add(new Option(label, k));
@@ -219,6 +253,7 @@ input.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#composer').requestSubmit(); }
   if (e.key === 'Escape' && current) current.cancel();
 });
+$('#export').addEventListener('click', exportHTML);
 stopBtn.addEventListener('click', () => current?.cancel());
 $('#new-chat').addEventListener('click', () => { current?.cancel(); turns.splice(0).forEach((t) => t.article.remove()); history.length = 0; });
 

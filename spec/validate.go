@@ -2,6 +2,7 @@ package spec
 
 import (
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 
@@ -88,6 +89,11 @@ func (s *Subset) Validate(src string, o Options) []Violation {
 	for {
 		tt := z.Next()
 		if tt == html.ErrorToken {
+			// The tokenizer drops a tag cut off at the end of input; a model that
+			// stops mid-tag (or a dangling-markup attack) must not pass as valid.
+			if err := z.Err(); err != io.EOF || len(z.Raw()) > 0 {
+				add("structure", "input ends inside a tag or could not be tokenized")
+			}
 			break
 		}
 		switch tt {
