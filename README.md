@@ -1,96 +1,134 @@
 # tamechat
 
-**Same chat UI, any model, safely. The answer is plain HTML, so it needs no client to read.**
+A test suite for rendering AI-written HTML, and a small chat app that passes it.
 
-Model vendors are starting to ship their own answer formats: artifacts, JSON component schemas, proprietary widgets. Each needs that vendor's renderer, which is a moat. HTML is what every browser, developer and model already speaks. tamechat restricts it and does not extend it: no custom elements, no invented attributes, so a valid answer is a valid HTML fragment and opens in any browser tab. "Download .html" saves a conversation as one file that works with JavaScript off.
+## The problem
 
+When an AI model writes an answer, your app has to show it. If the answer is HTML, it can carry code that steals data or sends the page somewhere else. We tested 32 known tricks against a page with no defense. 22 of them worked.
+
+So every chat app needs a rule for what HTML it will accept. Today each app invents its own, and nobody can check it against anyone else's.
+
+## What is here
+
+1. **A list of allowed HTML.** Paragraphs, headings, lists, tables, code, collapsible sections, callouts and suggested replies. Nothing else. The list is one file: [spec/subset.json](spec/subset.json). The written version is [spec/SPEC.md](spec/SPEC.md).
+2. **A test suite.** 58 sample documents, 32 of them attacks. Each says whether it must be accepted or rejected. Anyone can build their own checker in any language and run it against this list. See [conformance/manifest.json](conformance/manifest.json).
+3. **A small renderer.** About 5 KB of code with no outside dependencies. It shows allowed HTML and throws out the rest. DOMPurify is just as safe on these tests, so the renderer's only advantage is size.
+4. **A chat app.** It works with any model that speaks the OpenAI API, and it is the demo for the other three.
+
+## Compare sanitizers
+
+```sh
+bun run compare
 ```
-any OpenAI-compatible backend → server (Vercel AI SDK, system prompt, SSE) → web/ (renders safely, ~600 lines of TypeScript, no runtime dependencies for the HTML path)
-```
 
-Proof of concept. [Findings](findings/README.md) says what was measured and what was not.
+This runs the 32 attacks and the 9 valid documents through each tool in headless Chromium and prints a table. "Attacks contained" means no script ran, no request left the page and the page did not navigate. "Text kept" and "structure kept" check that a valid document comes out the same, because a tool that deletes everything is safe and useless. `escape everything` is in the table to show that.
 
-## Run it
+Result on Chromium 153:
 
-Bun 1.2+ and an OpenAI-compatible backend:
+| tool | attacks contained | text kept | structure kept |
+|---|---|---|---|
+| no defence | 22/32 | 9/9 | 9/9 |
+| escape everything | 32/32 | 0/9 | 0/9 |
+| DOMPurify default | 32/32 | 9/9 | 9/9 |
+| browser `setHTML()` | 32/32 | 7/9 | 7/9 |
+| tamechat renderer | 32/32 | 9/9 | 9/9 |
+
+`setHTML()` and DOMPurify are both safe here. `setHTML()` with its default settings removes `<button>` and `<details>`, so suggested replies and collapsible sections disappear. DOMPurify keeps them. The attacks were written against this project, so a pass shows the tool handles these 32 and nothing more.
+
+## What would count as success
+
+Someone else writes their own renderer and it passes the test suite. Until that happens, this is one person's project. After it, it is a standard.
+
+## Check your own model
+
+You need [Bun](https://bun.sh) 1.2 or newer and a model behind an OpenAI-compatible API (Ollama and llama.cpp both work).
 
 ```sh
 bun install
+bun run conform sample --backend http://127.0.0.1:11434/v1 --model llama3.2
+```
 
-# Ollama
+This asks 12 test questions and reports how many answers followed the rules, and which rules the rest broke. To check one file:
+
+```sh
+bun run conform check answer.html
+```
+
+## Try to break it
+
+The attacks are in `conformance/cases/attack/`. If you find one that runs a script through the renderer, open an issue. I will fix it and publish the fix before anything else.
+
+## Run the chat app
+
+```sh
 bun start --backend http://127.0.0.1:11434/v1 --model llama3.2
+```
 
-# llama.cpp, grammar-constrained
+Open http://127.0.0.1:8090/. The Format menu switches between HTML and Markdown answers. Changing it starts a new chat. "Download .html" saves a chat as one file that opens with no software and works with JavaScript off.
+
+Other setups:
+
+```sh
 bun start --backend http://127.0.0.1:8081/v1 --model <id> --grammar grammar/compact.gbnf --profile compact
 
-# hosted: no grammar, so the sanitizer and CSP carry the safety
 OPENAI_API_KEY=... bun start --backend https://api.openai.com/v1 --model <id> --key-env OPENAI_API_KEY
 ```
 
-Open http://127.0.0.1:8090/. Switch between rendered and source view, and between HTML and Markdown answers with the Format menu (changing it starts a new chat). Backend options go in `--extra '{"chat_template_kwargs":{"enable_thinking":false}}'`.
+The first uses llama.cpp with a grammar, which forces the model to follow the rules. The second is a hosted model with no grammar, so the page's own filters do the protecting.
 
-## Test your model
+## A result worth knowing
 
-```sh
-bun run conform sample --backend http://127.0.0.1:11434/v1 --model llama3.2
-bun run conform check [--profile compact] answer.html
-```
+If a grammar bans a token the model really wants, the model stops early. We banned the newline between blocks, and the median answer fell from 452 tokens to 45. This is true of any constrained output, not only HTML. If you use grammars, test answer length as well as validity. Details in [findings](findings/README.md).
 
-`sample` sends 12 built-in prompts and reports how many answers were valid as emitted and which rules the rest broke.
-
-## Measure HTML against Markdown
-
-The Format menu sends the same conversation to the same model with either the HTML system prompt (and grammar, if set) or a Markdown one. The page renders Markdown the way most chat UIs do, with marked and DOMPurify, so the baseline is the usual stack. Every turn shows what it cost: time to first token, time to first content on screen, render time across all frames, worst frame, long tasks, tokens and DOM size.
-
-```sh
-bun run bench --backend http://127.0.0.1:11434/v1 --model llama3.2 --n 3 --out runs.jsonl
-bun run bench ... --cpu-slowdown 4        # a slower device
-```
-
-`bench` drives headless Chromium through the 12 prompts in both formats, alternating the order, and prints median and p95 per format plus the minified client bytes each path needs. Content differs between formats because the prompts differ, so read per-word and per-character numbers, not only totals.
-
-Traces are off until you ask. `--trace-file traces/spans.jsonl` appends one JSON span per line, and `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` sends the same spans to any OpenTelemetry collector:
-
-```sh
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 bun start --trace-file traces/spans.jsonl --backend ... --model ...
-```
-
-Each answer is a `chat` span (format, model, grammar, time to first token, characters, output tokens, finish reason) with the browser's `client.render` span as its child. Prompt and answer text are never recorded.
-
-## The standard is the test suite
-
-`conformance/manifest.json` lists 58 documents (32 attacks) with the expected verdict per profile. An implementation in any language can run it. Prose spec: [spec/SPEC.md](spec/SPEC.md), checked against `spec/subset.json` by a test.
-
-## What holds, what does not
+## What we know and what we don't
 
 | | |
 |---|---|
-| Safety | Validator, sanitizer, CSP and widget sandbox, each attacked alone in a browser with 32 attack documents. The sanitizer mirrors the grammar, so those two fail together; CSP and sandbox are independent. [Details](findings/README.md). |
-| Cost | Markdown is cheaper per word today (HTML about 1.4×). Compact HTML is 15% cheaper than strict on identical content. This project makes no claim to be cheaper. |
-| Hosted models | Not tested. Only a local model and a fake backend. |
-| User preference | Not tested. |
+| Safety | Four layers of defense, each attacked alone in a real browser. Two layers share a source, so they can fail together. A second reviewer is still needed. |
+| Cost | HTML uses about 1.4 times the tokens of Markdown, so it is slower and costs more per word. A compact mode saves 15%. We don't claim HTML is cheaper. |
+| Interactive widgets | Optional, and less safe than the rest. Turn them on only for models you trust. |
+| Hosted models | Not tested. Only one local model. |
+| Do people like it | Not tested. A model judge preferred Markdown, and it is not an independent judge. |
 
-## Falsifiers
+## What would prove this wrong
 
-| if | then |
+| If this happens | We do this |
 |---|---|
-| under 90% valid as emitted on hosted models, across three backends | stop claiming it works without a grammar |
-| people do not prefer styled HTML to Markdown | drop the UX claim, keep portability |
-| red team finds script execution through the sanitizer | fix and publish first |
-| a fine-tune on compact answers does not cut tokens per word | drop the tokenizer argument |
-| `bench` shows Markdown reaching first content sooner or rendering cheaper on the same model, and people do not notice the HTML gains | drop the UX claim, keep portability |
+| Someone gets a script to run through the filter | Fix it first and tell everyone |
+| Fewer than 90% of answers follow the rules on three hosted models | Stop saying it works without a grammar |
+| People prefer Markdown to styled HTML | Drop the claim that it looks better. Keep the safety suite. |
+| Training a model on compact answers doesn't cut tokens | Drop the tokenizer idea |
 
-## Layout
+## Help wanted
 
-`spec/` subset, prompts, prose spec · `src/` validator, grammar, server, telemetry · `web/` the page · `bin/` serve, bench, conform, tokencost, grammar · `grammar/` generated GBNF · `conformance/` the suite · `test/` · `findings/`
+1. Run `bun run conform sample` on your own model, especially a small or hosted one, and share the row it prints.
+2. Write a second renderer in another language and run it against the suite.
+3. If you build a chat app, tell us what would stop you from using this.
+
+## Related work
+
+- **Markdown plus DOMPurify** is the usual setup. It is well reviewed. It has no shared test suite for model output.
+- **Email HTML.** Every email app shows its own subset of HTML. Nobody owns the format and there is no common list of what works.
+- **AMP** was a restricted, validated subset of HTML run by one company. Many people saw it as lock-in. A subset with a checker can become a moat, so this one needs open ownership.
+- **MCP Apps, MCP-UI, A2UI** put interactive interfaces inside answers. They cover a different, harder problem. This project covers the safe, static part.
+
+## Where things are
+
+| Folder | What is in it |
+|---|---|
+| `spec/` | The allowed HTML list, the prompts and the written rules |
+| `conformance/` | The test documents |
+| `src/` | The checker, the grammar, the server |
+| `web/` | The chat page and the renderer |
+| `bin/` | Command-line tools |
+| `grammar/` | Generated grammar files |
+| `findings/` | Measurements and how far to trust them |
 
 ```sh
 bun run typecheck
 bun test
-bun run e2e        # Playwright: the page, then each defence layer attacked alone
-bun run grammar    # regenerate grammars
+bun run e2e
+bun run grammar
 ```
 
-Related: A2UI and Open-JSON-UI describe UI as JSON and need a renderer per platform; MCP-UI embeds sandboxed HTML and is the closest relative. This loses on native clients and on token cost.
-
-MIT.
+MIT license.

@@ -15,6 +15,7 @@
     "e2e": "bun run build && bun test/e2e/run.ts",
     "grammar": "bun bin/grammar.ts",
     "conform": "bun bin/conform.ts",
+    "compare": "bun bin/compare.ts",
     "tokencost": "bun bin/tokencost.ts",
     "bench": "bun run build && bun bin/bench.ts"
   },
