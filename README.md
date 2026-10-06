@@ -5,7 +5,7 @@
 Model vendors are starting to ship their own answer formats: artifacts, JSON component schemas, proprietary widgets. Each needs that vendor's renderer, which is a moat. HTML is what every browser, developer and model already speaks. tamechat restricts it and does not extend it: no custom elements, no invented attributes, so a valid answer is a valid HTML fragment and opens in any browser tab. "Download .html" saves a conversation as one file that works with JavaScript off.
 
 ```
-any OpenAI-compatible backend → server (Vercel AI SDK, system prompt, SSE) → web/ (renders safely, ~470 lines of TypeScript, no runtime dependencies)
+any OpenAI-compatible backend → server (Vercel AI SDK, system prompt, SSE) → web/ (renders safely, ~600 lines of TypeScript, no runtime dependencies for the HTML path)
 ```
 
 Proof of concept. [Findings](findings/README.md) says what was measured and what was not.
@@ -27,7 +27,7 @@ bun start --backend http://127.0.0.1:8081/v1 --model <id> --grammar grammar/comp
 OPENAI_API_KEY=... bun start --backend https://api.openai.com/v1 --model <id> --key-env OPENAI_API_KEY
 ```
 
-Open http://127.0.0.1:8090/. Switch between rendered and source view. Backend options go in `--extra '{"chat_template_kwargs":{"enable_thinking":false}}'`.
+Open http://127.0.0.1:8090/. Switch between rendered and source view, and between HTML and Markdown answers with the Format menu (changing it starts a new chat). Backend options go in `--extra '{"chat_template_kwargs":{"enable_thinking":false}}'`.
 
 ## Test your model
 
@@ -37,6 +37,25 @@ bun run conform check [--profile compact] answer.html
 ```
 
 `sample` sends 12 built-in prompts and reports how many answers were valid as emitted and which rules the rest broke.
+
+## Measure HTML against Markdown
+
+The Format menu sends the same conversation to the same model with either the HTML system prompt (and grammar, if set) or a Markdown one. The page renders Markdown the way most chat UIs do, with marked and DOMPurify, so the baseline is the usual stack. Every turn shows what it cost: time to first token, time to first content on screen, render time across all frames, worst frame, long tasks, tokens and DOM size.
+
+```sh
+bun run bench --backend http://127.0.0.1:11434/v1 --model llama3.2 --n 3 --out runs.jsonl
+bun run bench ... --cpu-slowdown 4        # a slower device
+```
+
+`bench` drives headless Chromium through the 12 prompts in both formats, alternating the order, and prints median and p95 per format plus the minified client bytes each path needs. Content differs between formats because the prompts differ, so read per-word and per-character numbers, not only totals.
+
+Traces are off until you ask. `--trace-file traces/spans.jsonl` appends one JSON span per line, and `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` sends the same spans to any OpenTelemetry collector:
+
+```sh
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 bun start --trace-file traces/spans.jsonl --backend ... --model ...
+```
+
+Each answer is a `chat` span (format, model, grammar, time to first token, characters, output tokens, finish reason) with the browser's `client.render` span as its child. Prompt and answer text are never recorded.
 
 ## The standard is the test suite
 
@@ -59,10 +78,11 @@ bun run conform check [--profile compact] answer.html
 | people do not prefer styled HTML to Markdown | drop the UX claim, keep portability |
 | red team finds script execution through the sanitizer | fix and publish first |
 | a fine-tune on compact answers does not cut tokens per word | drop the tokenizer argument |
+| `bench` shows Markdown reaching first content sooner or rendering cheaper on the same model, and people do not notice the HTML gains | drop the UX claim, keep portability |
 
 ## Layout
 
-`spec/` subset, prompts, prose spec · `src/` validator, grammar, server · `web/` the page · `bin/` conform, tokencost, serve, grammar · `grammar/` generated GBNF · `conformance/` the suite · `test/` · `findings/`
+`spec/` subset, prompts, prose spec · `src/` validator, grammar, server, telemetry · `web/` the page · `bin/` serve, bench, conform, tokencost, grammar · `grammar/` generated GBNF · `conformance/` the suite · `test/` · `findings/`
 
 ```sh
 bun run typecheck

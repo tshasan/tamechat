@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { systemPrompt } from '../src/prompts.ts';
 import { createApp } from '../src/server.ts';
+import { disabledTelemetry } from '../src/telemetry.ts';
 import { streamingBackend, type Listening, type Seen } from './backend.ts';
 
 const chunks = [
@@ -34,6 +35,7 @@ function start(grammar: string): Promise<{ server: Server; port: number }> {
     profile: 'compact',
     hosts: ['localhost', '127.0.0.1', '::1'],
     staticDir,
+    telemetry: disabledTelemetry,
   });
   return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve({ server, port: (server.address() as AddressInfo).port })));
 }
@@ -79,7 +81,7 @@ test('chat streams the answer and the reasoning, and sends what the backend need
   seen.length = 0;
   const reply = await chat();
   assert.equal(reply.status, 200);
-  for (const want of ['event: think\ndata: "hmm "', 'event: answer\ndata: "<p>Hel"', 'event: answer\ndata: "lo</p>"', 'event: ctrl\ndata: {"type":"done"}']) {
+  for (const want of ['event: think\ndata: "hmm "', 'event: answer\ndata: "<p>Hel"', 'event: answer\ndata: "lo</p>"', 'event: ctrl\ndata: {"type":"done","outputTokens":0,"finishReason":"stop"}']) {
     assert.ok(reply.body.includes(want), `missing ${want} in\n${reply.body}`);
   }
   assert.ok(!reply.body.includes('\\u003c'), 'tags must not be escaped on the wire');
@@ -119,7 +121,7 @@ test('the server refuses what it should', async () => {
 test('config names the backend host and nothing else', async () => {
   const { body } = await call(port, '/api/config');
   const config = JSON.parse(body) as Record<string, unknown>;
-  assert.deepEqual(config, { backend: upstream.url.replace('http://', ''), model: 'm', profile: 'compact', grammar: false });
+  assert.deepEqual(config, { backend: upstream.url.replace('http://', ''), model: 'm', profile: 'compact', grammar: false, formats: ['html', 'markdown'], tracing: false });
   assert.ok(!body.includes('secret-key'));
 });
 

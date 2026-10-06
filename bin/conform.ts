@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { sample, type Prompt } from '../src/conform.ts';
-import { parseExtra } from '../src/model.ts';
+import { backendFrom, backendOptions } from '../src/backendFlags.ts';
 import { subset, type Profile } from '../src/subset.ts';
 import { describe, validate } from '../src/validate.ts';
 
@@ -45,33 +45,21 @@ async function runSample(args: string[]): Promise<number> {
   const { values } = parseArgs({
     args,
     options: {
-      backend: { type: 'string', default: 'http://127.0.0.1:8081/v1' },
-      model: { type: 'string', default: '' },
-      'key-env': { type: 'string', default: '' },
+      ...backendOptions,
       profile: { type: 'string', default: 'strict' },
       prompts: { type: 'string', default: '' },
       n: { type: 'string', default: '1' },
-      grammar: { type: 'string', default: '' },
       'max-tokens': { type: 'string', default: '900' },
       temp: { type: 'string', default: '0.7' },
       label: { type: 'string', default: '' },
-      extra: { type: 'string', default: '' },
       v: { type: 'boolean', default: false },
     },
   });
   const promptsFile = values.prompts || new URL('../corpus/prompts.json', import.meta.url);
   const prompts = JSON.parse(readFileSync(promptsFile, 'utf8')) as Prompt[];
-  const apiKey = values['key-env'] ? (process.env[values['key-env']] ?? '') : '';
-  if (values['key-env'] && !apiKey) die(`${values['key-env']} is empty`);
-  let extra: Record<string, unknown>;
-  try {
-    extra = parseExtra(values.extra);
-  } catch (e) {
-    die(`--extra must be a JSON object: ${e instanceof Error ? e.message : e}`);
-  }
   const report = await sample(
     {
-      backend: { baseURL: values.backend, model: values.model, apiKey, grammar: values.grammar ? readFileSync(values.grammar, 'utf8') : '', extra },
+      backend: backendFrom(values),
       profile: profileOf(values.profile),
       prompts,
       samples: Number(values.n),

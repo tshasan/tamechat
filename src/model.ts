@@ -14,6 +14,7 @@ export function chatModel(b: Backend): LanguageModel {
     name: 'tamechat',
     baseURL: b.baseURL.replace(/\/+$/, ''),
     apiKey: b.apiKey || undefined,
+    includeUsage: true,
     transformRequestBody: (body) => ({ ...b.extra, ...body, ...(b.grammar ? { grammar: b.grammar } : {}) }),
   });
   return provider.chatModel(b.model);

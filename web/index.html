@@ -12,6 +12,7 @@
   <h1>tamechat</h1>
   <p id="backend">connecting…</p>
   <nav>
+    <label>Format <select id="format"><option value="html">HTML</option><option value="markdown">Markdown</option></select></label>
     <label><input type="radio" name="view" value="rendered" checked> Rendered</label>
     <label><input type="radio" name="view" value="source"> Source</label>
     <button type="button" id="export" title="One static file, no script">Download .html</button>
@@ -19,7 +20,7 @@
   </nav>
 </header>
 <main id="log" aria-live="polite">
-  <p id="empty">Ask anything. The model answers in a small, safe subset of HTML. Switch to Source to see it.</p>
+  <p id="empty">Ask anything. The model answers in a small, safe subset of HTML, or in Markdown if you switch Format. Source shows what it wrote.</p>
 </main>
 <form id="composer">
   <textarea id="input" rows="2" placeholder="Ask something" required></textarea>

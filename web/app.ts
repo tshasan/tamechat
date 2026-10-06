@@ -1,7 +1,9 @@
+import { isFormat, type Format } from '../src/format.ts';
 import { subset } from '../src/subset.ts';
 import { serverEvents } from './events.ts';
+import { MarkdownRenderer } from './markdown.ts';
+import { summary, TurnTimer, type TurnMetrics } from './metrics.ts';
 import { StreamRenderer } from './render.ts';
-import { sanitize } from './sanitize.ts';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -10,6 +12,7 @@ interface Message {
 
 interface Turn {
   question: string;
+  format: Format;
   html: string;
   article: HTMLElement;
   answer: HTMLElement;
@@ -24,6 +27,13 @@ interface ServerConfig {
   model: string;
   profile: string;
   grammar: boolean;
+  tracing: boolean;
+}
+
+interface Renderer {
+  push: (chunk: string) => void;
+  render: () => void;
+  finish: () => void;
 }
 
 const widgetVariables = ['--fg', '--bg', '--muted', '--accent', '--border', '--font'];
@@ -40,11 +50,16 @@ const input = $<HTMLTextAreaElement>('#input');
 const sendButton = $<HTMLButtonElement>('#send');
 const stopButton = $<HTMLButtonElement>('#stop');
 const composer = $<HTMLFormElement>('#composer');
+const formatSelect = $<HTMLSelectElement>('#format');
 const history: Message[] = [];
 const turns: Turn[] = [];
 let cancel: (() => void) | null = null;
 
-function addTurn(question: string): Turn {
+function currentFormat(): Format {
+  return isFormat(formatSelect.value) ? formatSelect.value : 'html';
+}
+
+function addTurn(question: string, format: Format): Turn {
   const article = document.createElement('article');
   article.innerHTML = `<p class="user"></p>
     <details class="thinking" open hidden><summary>Thinking</summary><pre></pre></details>
@@ -57,6 +72,7 @@ function addTurn(question: string): Turn {
   article.scrollIntoView({ block: 'end' });
   const turn: Turn = {
     question,
+    format,
     html: '',
     article,
     answer: part('.answer'),
@@ -67,6 +83,13 @@ function addTurn(question: string): Turn {
   };
   turns.push(turn);
   return turn;
+}
+
+function report(turn: Turn, metrics: TurnMetrics, traceId: string, prefix = ''): void {
+  turn.meta.textContent = prefix + summary(metrics);
+  if (traceId) {
+    void fetch('/api/trace', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ traceId, metrics }) });
+  }
 }
 
 function mountWidget(template: HTMLTemplateElement): void {
@@ -92,7 +115,9 @@ async function send(text: string): Promise<void> {
   if (cancel || !text.trim()) return;
   document.querySelector('#empty')?.remove();
   history.push({ role: 'user', content: text });
-  const turn = addTurn(text);
+  const format = currentFormat();
+  formatSelect.disabled = true;
+  const turn = addTurn(text, format);
   const controller = new AbortController();
   cancel = () => controller.abort();
   sendButton.hidden = true;
@@ -102,8 +127,15 @@ async function send(text: string): Promise<void> {
   let thought = '';
   let frame = 0;
   let thinkingDone = false;
-  const view = new StreamRenderer(turn.answer, subset, enhance);
-  const started = performance.now();
+  let traceId = '';
+  let outputTokens = 0;
+  const view: Renderer = format === 'markdown' ? new MarkdownRenderer(turn.answer) : new StreamRenderer(turn.answer, subset, enhance);
+  const timer = new TurnTimer(format);
+  const paint = () => {
+    const t0 = performance.now();
+    view.render();
+    timer.rendered(performance.now() - t0, turn.answer.childNodes.length > 0 && (turn.answer.textContent ?? '').trim() !== '');
+  };
   const show = () => {
     turn.html = html;
     turn.source.textContent = html;
@@ -114,10 +146,11 @@ async function send(text: string): Promise<void> {
       method: 'POST',
       signal: controller.signal,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: history }),
+      body: JSON.stringify({ messages: history, format }),
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
     for await (const { event, data } of serverEvents(res.body)) {
+      timer.firstByte();
       if (event === 'think') {
         thought += String(data);
         turn.thinking.hidden = false;
@@ -127,28 +160,33 @@ async function send(text: string): Promise<void> {
           thinkingDone = true;
           turn.thinking.open = false;
         }
+        timer.firstToken();
         html += String(data);
         view.push(String(data));
         frame ||= requestAnimationFrame(() => {
           frame = 0;
-          view.render();
+          paint();
           show();
         });
-      } else if (event === 'ctrl' && (data as { type?: string }).type === 'error') {
-        throw new Error((data as { message?: string }).message || 'backend error');
+      } else if (event === 'ctrl') {
+        const ctrl = data as { type?: string; message?: string; traceId?: string; outputTokens?: number };
+        if (ctrl.type === 'error') throw new Error(ctrl.message || 'backend error');
+        if (ctrl.type === 'trace') traceId = ctrl.traceId ?? '';
+        if (ctrl.type === 'done') outputTokens = ctrl.outputTokens ?? 0;
       }
     }
     cancelAnimationFrame(frame);
     view.finish();
+    paint();
     show();
     history.push({ role: 'assistant', content: html });
-    turn.meta.textContent = `${html.length} characters of HTML in ${((performance.now() - started) / 1000).toFixed(1)} s`;
+    report(turn, timer.finish(turn.answer, html.length, outputTokens, false), traceId);
   } catch (e) {
     cancelAnimationFrame(frame);
     view.finish();
     show();
     if (e instanceof DOMException && e.name === 'AbortError') {
-      turn.meta.textContent = 'Stopped';
+      report(turn, timer.finish(turn.answer, html.length, outputTokens, true), traceId, 'Stopped · ');
       if (html) history.push({ role: 'assistant', content: html });
       else history.pop();
     } else {
@@ -157,9 +195,16 @@ async function send(text: string): Promise<void> {
     }
   } finally {
     cancel = null;
+    formatSelect.disabled = false;
     sendButton.hidden = false;
     stopButton.hidden = true;
   }
+}
+
+function newChat(): void {
+  cancel?.();
+  for (const t of turns.splice(0)) t.article.remove();
+  history.length = 0;
 }
 
 function exportHtml(): void {
@@ -181,12 +226,10 @@ function exportHtml(): void {
     if (!turn.html) continue;
     const question = doc.createElement('h2');
     question.textContent = turn.question;
-    const template = document.createElement('template');
-    template.innerHTML = turn.html;
-    sanitize(subset, template.content);
-    for (const w of template.content.querySelectorAll('template[data-widget]')) w.remove();
+    const copy = turn.answer.cloneNode(true) as HTMLElement;
+    copy.querySelectorAll('iframe').forEach((f) => f.remove());
     const section = doc.createElement('section');
-    section.append(question, doc.importNode(template.content, true));
+    section.append(question, ...[...copy.childNodes].map((n) => doc.importNode(n, true)));
     main.append(section);
   }
   doc.body.append(main);
@@ -233,16 +276,13 @@ input.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') cancel?.();
 });
 stopButton.addEventListener('click', () => cancel?.());
+formatSelect.addEventListener('change', () => newChat());
 $('#export').addEventListener('click', exportHtml);
-$('#new-chat').addEventListener('click', () => {
-  cancel?.();
-  for (const t of turns.splice(0)) t.article.remove();
-  history.length = 0;
-});
+$('#new-chat').addEventListener('click', () => newChat());
 
 try {
   const config = (await (await fetch('/api/config')).json()) as ServerConfig;
-  $('#backend').textContent = `${config.backend} · ${config.model} · ${config.profile} profile${config.grammar ? ' · grammar-constrained' : ''}`;
+  $('#backend').textContent = `${config.backend} · ${config.model} · ${config.profile} profile${config.grammar ? ' · grammar-constrained' : ''}${config.tracing ? ' · tracing' : ''}`;
 } catch (e) {
   $('#backend').textContent = `could not reach the server: ${e instanceof Error ? e.message : e}`;
   sendButton.disabled = true;

@@ -54,6 +54,13 @@ const slow = `<p>${'word '.repeat(200)}</p>`;
 
 const scripts: Record<string, string> = { compact, strict, evil, slow, widgetprobe: widgetProbe };
 
+const markdownScripts: Record<string, string> = {
+  compact: 'Here is a comparison.\n\n| Language | Speed | Curve |\n|---|---|---|\n| Go | Fast | Gentle |\n| Rust | Faster | Steep |\n\nSteps:\n\n- one\n- two\n- three\n\n> **Tip:** Pick the one you know.\n',
+  strict: 'Plain answer.\n\n- a\n- b\n',
+  evil: 'hi [link](javascript:window.__pwned=1) <img src="https://evil.example/x.png" onerror="window.__pwned=1">\n\n<script>window.__pwned=1</script>\n\n<iframe src="https://evil.example"></iframe>\n\n# big\n',
+  slow: `${'word '.repeat(200)}\n`,
+};
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface Fake {
@@ -69,10 +76,11 @@ export async function startFake(): Promise<Fake> {
     const chunks: Buffer[] = [];
     for await (const c of req) chunks.push(c as Buffer);
     const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}') as { messages: { content: string }[] };
+    const markdown = (body.messages[0]?.content ?? '').includes('Write your answer in Markdown');
     seen.push({ auth: req.headers.authorization, body: body as unknown as Record<string, unknown> });
     const last = (body.messages.at(-1)?.content ?? '').toLowerCase();
     const key = Object.keys(scripts).find((k) => last.includes(k)) ?? 'strict';
-    const text = scripts[key] as string;
+    const text = (markdown ? markdownScripts[key] : scripts[key]) ?? (scripts[key] as string);
     res.writeHead(200, { 'Content-Type': 'text/event-stream' });
     const send = (delta: Record<string, string>, finish: string | null = null) => res.write(`data: ${JSON.stringify({ choices: [{ delta, finish_reason: finish }] })}\n\n`);
     const step = key === 'slow' ? 5 : 3;

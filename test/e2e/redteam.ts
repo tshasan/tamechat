@@ -6,7 +6,7 @@ import { build } from 'esbuild';
 import type { Browser } from 'playwright';
 import type { Fake } from './fake.ts';
 
-type Mode = 'raw' | 'whole' | 'stream';
+type Mode = 'raw' | 'whole' | 'stream' | 'markdown';
 
 const attackDir = join(import.meta.dirname, '..', '..', 'conformance', 'cases', 'attack');
 const attacks = readdirSync(attackDir)
@@ -58,6 +58,7 @@ async function layer(browser: Browser, script: string, title: string, csp: strin
   let leaks = 0;
   for (const mode of modes) {
     const bad: string[] = [];
+    const inert: string[] = [];
     for (const attack of attacks) {
       hits.length = 0;
       await tab.evaluate(() => {
@@ -68,8 +69,9 @@ async function layer(browser: Browser, script: string, title: string, csp: strin
       const pwned = await tab.evaluate(() => (window as unknown as { __pwned: number }).__pwned);
       const navigated = tab.url() !== url;
       const dom = !navigated && (await tab.evaluate(() => /on\w+\s*=|javascript:/i.test(document.getElementById('out')?.innerHTML ?? '')).catch(() => true));
-      const why = [pwned && 'script ran', hits.length && 'request to evil.example', navigated && 'navigated', dom && 'handler/javascript: left in DOM'].filter(Boolean);
+      const why = [pwned && 'script ran', hits.length && 'request to evil.example', navigated && 'navigated', dom && mode !== 'markdown' && 'handler/javascript: left in DOM'].filter(Boolean);
       if (why.length) bad.push(`${attack.name} (${why.join(', ')})`);
+      else if (dom) inert.push(attack.name);
       if (navigated) {
         await tab.goto(url);
         await tab.waitForFunction(() => window.ready);
@@ -77,6 +79,7 @@ async function layer(browser: Browser, script: string, title: string, csp: strin
     }
     console.log(`  ${mode.padEnd(6)} ${bad.length ? `HOLES ${bad.length}` : `all ${attacks.length} contained`}`);
     for (const b of bad) console.log(`         - ${b}`);
+    if (inert.length) console.log(`         inert handler text left in the DOM, nothing ran: ${inert.join(', ')}`);
     leaks += bad.length;
   }
   await context.close();
@@ -150,6 +153,7 @@ export async function redteam(browser: Browser, base: string, fake: Fake): Promi
   }
 
   let holes = await layer(browser, script, 'Layer 1: sanitizer alone, no CSP', null, ['whole', 'stream']);
+  holes += await layer(browser, script, 'Baseline: the same attacks through marked + DOMPurify, no CSP', null, ['markdown']);
 
   const csp = await headerOf(base);
   if (csp) {

@@ -19,10 +19,7 @@ export async function e2e(browser: Browser, base: string, fake: Fake): Promise<n
 
   const done = (n: number) =>
     page.waitForFunction(
-      (n) =>
-        document.querySelectorAll('article').length === n &&
-        !(document.querySelector('#send') as HTMLElement).hidden &&
-        /characters of HTML|Stopped|Error/.test([...document.querySelectorAll('.meta')].at(-1)?.textContent ?? ''),
+      (n) => document.querySelectorAll('article').length === n && !(document.querySelector('#send') as HTMLElement).hidden && /first token|Error/.test([...document.querySelectorAll('.meta')].at(-1)?.textContent ?? ''),
       n,
       { timeout: 30000 },
     );

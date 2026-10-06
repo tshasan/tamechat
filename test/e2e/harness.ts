@@ -1,9 +1,10 @@
 import { subset } from '../../src/subset.ts';
+import { markdownToHtml } from '../../web/markdown.ts';
 import { StreamRenderer } from '../../web/render.ts';
 
 declare global {
   interface Window {
-    run: (html: string, mode: 'raw' | 'whole' | 'stream') => void;
+    run: (html: string, mode: 'raw' | 'whole' | 'stream' | 'markdown') => void;
     ready: boolean;
   }
 }
@@ -13,6 +14,10 @@ window.run = (html, mode) => {
   out.replaceChildren();
   if (mode === 'raw') {
     out.innerHTML = html;
+    return;
+  }
+  if (mode === 'markdown') {
+    out.innerHTML = markdownToHtml(html);
     return;
   }
   const renderer = new StreamRenderer(out, subset, () => {});
