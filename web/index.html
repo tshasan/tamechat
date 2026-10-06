@@ -10,20 +10,16 @@
 <body>
 <header>
   <h1>tamechat</h1>
-  <p id="backend" class="muted">connecting…</p>
-  <div class="controls">
-    <fieldset class="seg">
-      <legend>View</legend>
-      <label><input type="radio" name="view" value="rendered" checked> Rendered</label>
-      <label><input type="radio" name="view" value="source"> Source</label>
-    </fieldset>
-    <label>Theme <select id="theme"></select></label>
-    <button type="button" id="export" title="One static file: the answers and the chosen theme, no script">Download .html</button>
+  <p id="backend">connecting…</p>
+  <nav>
+    <label><input type="radio" name="view" value="rendered" checked> Rendered</label>
+    <label><input type="radio" name="view" value="source"> Source</label>
+    <button type="button" id="export" title="One static file, no script">Download .html</button>
     <button type="button" id="new-chat">New chat</button>
-  </div>
+  </nav>
 </header>
 <main id="log" aria-live="polite">
-  <p id="empty" class="muted">Ask anything. The model answers in a small, safe subset of HTML; switch the view to see the source, or the theme to restyle it with plain classless CSS.</p>
+  <p id="empty">Ask anything. The model answers in a small, safe subset of HTML. Switch to Source to see it.</p>
 </main>
 <form id="composer">
   <textarea id="input" rows="2" placeholder="Ask something" required></textarea>

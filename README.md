@@ -5,33 +5,35 @@
 Model vendors are starting to ship their own answer formats: artifacts, JSON component schemas, proprietary widgets. Each needs that vendor's renderer, which is a moat. HTML is what every browser, developer and model already speaks. tamechat restricts it and does not extend it: no custom elements, no invented attributes, so a valid answer is a valid HTML fragment and opens in any browser tab. "Download .html" saves a conversation as one file that works with JavaScript off.
 
 ```
-any OpenAI-compatible backend → cmd/serve (system prompt, SSE) → web/ (renders safely, ~530 lines of JS, no dependencies)
+any OpenAI-compatible backend → server (Vercel AI SDK, system prompt, SSE) → web/ (renders safely, ~470 lines of TypeScript, no runtime dependencies)
 ```
 
 Proof of concept. [Findings](findings/README.md) says what was measured and what was not.
 
 ## Run it
 
-Go 1.22+ and an OpenAI-compatible backend:
+Bun 1.2+ and an OpenAI-compatible backend:
 
 ```sh
+bun install
+
 # Ollama
-go run ./cmd/serve -backend http://127.0.0.1:11434/v1 -model llama3.2
+bun start -- --backend http://127.0.0.1:11434/v1 --model llama3.2
 
 # llama.cpp, grammar-constrained
-go run ./cmd/serve -backend http://127.0.0.1:8081/v1 -model <id> -grammar grammar/compact.gbnf -profile compact
+bun start -- --backend http://127.0.0.1:8081/v1 --model <id> --grammar grammar/compact.gbnf --profile compact
 
 # hosted: no grammar, so the sanitizer and CSP carry the safety
-OPENAI_API_KEY=... go run ./cmd/serve -backend https://api.openai.com/v1 -model <id> -key-env OPENAI_API_KEY
+OPENAI_API_KEY=... bun start -- --backend https://api.openai.com/v1 --model <id> --key-env OPENAI_API_KEY
 ```
 
-Open http://127.0.0.1:8090/. Switch rendered/source view or one of five classless themes on the same answer. Backend options go in `-extra '{"chat_template_kwargs":{"enable_thinking":false}}'`.
+Open http://127.0.0.1:8090/. Switch between rendered and source view. Backend options go in `--extra '{"chat_template_kwargs":{"enable_thinking":false}}'`.
 
 ## Test your model
 
 ```sh
-go run ./cmd/conform sample -backend http://127.0.0.1:11434/v1 -model llama3.2
-go run ./cmd/conform check [-profile compact] answer.html
+bun run conform sample --backend http://127.0.0.1:11434/v1 --model llama3.2
+bun run conform check [--profile compact] answer.html
 ```
 
 `sample` sends 12 built-in prompts and reports how many answers were valid as emitted and which rules the rest broke.
@@ -54,20 +56,21 @@ go run ./cmd/conform check [-profile compact] answer.html
 | if | then |
 |---|---|
 | under 90% valid as emitted on hosted models, across three backends | stop claiming it works without a grammar |
-| people do not prefer themed HTML to Markdown | drop the UX claim, keep portability |
+| people do not prefer styled HTML to Markdown | drop the UX claim, keep portability |
 | red team finds script execution through the sanitizer | fix and publish first |
 | a fine-tune on compact answers does not cut tokens per word | drop the tokenizer argument |
 
 ## Layout
 
-`spec/` subset and validator · `grammar/` generated GBNF · `conformance/` the suite · `cmd/conform` · `cmd/tokencost` · `cmd/serve` + `web/` demo · `test/e2e`, `test/redteam` (Playwright) · `findings/`
+`spec/` subset, prompts, prose spec · `src/` validator, grammar, server · `web/` the page · `bin/` conform, tokencost, serve, grammar · `grammar/` generated GBNF · `conformance/` the suite · `test/` · `findings/`
 
 ```sh
-go test ./...
-node --test web/scanner.test.js
-python3 grammar/make_grammar.py   # regenerate grammars
+bun run typecheck
+bun test
+bun run e2e        # Playwright: the page, then each defence layer attacked alone
+bun run grammar    # regenerate grammars
 ```
 
 Related: A2UI and Open-JSON-UI describe UI as JSON and need a renderer per platform; MCP-UI embeds sandboxed HTML and is the closest relative. This loses on native clients and on token cost.
 
-MIT. Vendored stylesheets: [THIRD_PARTY.md](THIRD_PARTY.md).
+MIT.

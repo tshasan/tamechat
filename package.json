@@ -1,0 +1,32 @@
+{
+  "name": "tamechat",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "bun": ">=1.2"
+  },
+  "scripts": {
+    "build": "bun scripts/build.ts",
+    "start": "bun run build && bun bin/serve.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "e2e": "bun run build && bun test/e2e/run.ts",
+    "grammar": "bun bin/grammar.ts",
+    "conform": "bun bin/conform.ts",
+    "tokencost": "bun bin/tokencost.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.63",
+    "ai": "^7.0.128",
+    "parse5": "^8.0.1",
+    "parse5-sax-parser": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "esbuild": "^0.28.2",
+    "playwright": "^1.63.0",
+    "typescript": "^7.0.2"
+  }
+}

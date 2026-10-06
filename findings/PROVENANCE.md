@@ -10,6 +10,6 @@ What produced the numbers in [README.md](README.md), so they can be checked or r
 | Sampling | temperature 0.7; thinking off unless stated; one sample per prompt (the same seed per prompt across arms in `grammar-shapes/`) |
 | Prompts | `corpus/prompts.json` (12) |
 | Run dates | October 2026 |
-| Token counts | the server's own `/tokenize` for that model (`cmd/tokencost`), not an approximation |
+| Token counts | the server's own `/tokenize` for that model (`bin/tokencost.ts`), not an approximation |
 
 Not recorded: the exact sampler seed values, and the order the arms were run in.

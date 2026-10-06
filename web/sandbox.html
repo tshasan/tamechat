@@ -5,36 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Widget</title>
 <style>
-  :root { color-scheme: light dark; }
-  html, body { margin: 0; }
-  body { padding: 12px; font: 15px/1.5 var(--font, system-ui, sans-serif);
-         color: var(--fg); background: var(--bg); }
-  button, input, select, textarea { font: inherit; }
+:root { color-scheme: light dark; }
+html, body { margin: 0; }
+body { padding: 12px; font: 15px/1.5 var(--font, system-ui, sans-serif); color: var(--fg); background: var(--bg); }
+button, input, select, textarea { font: inherit; }
 </style>
-<script>
-// Host shell for model-written widgets. Loaded in an iframe with
-// sandbox="allow-scripts" (opaque origin). The bridge serves this file with
-// a CSP that blocks all network access, so a widget cannot leak data.
-(() => {
-  let rendered = false;
-  addEventListener('message', (e) => {
-    if (e.source !== parent || rendered || !e.data || e.data.type !== 'render') return;
-    rendered = true;
-    for (const [k, v] of Object.entries(e.data.theme || {})) {
-      if (v) document.documentElement.style.setProperty(k, v);
-    }
-    // Scripts in a contextual fragment run when inserted, in document order.
-    const frag = document.createRange().createContextualFragment(String(e.data.html));
-    document.body.append(frag);
-    const report = () => parent.postMessage(
-      { type: 'height', height: document.documentElement.scrollHeight }, '*');
-    new ResizeObserver(report).observe(document.body);
-    report();
-  });
-  // The one capability widgets get: send a message as the user.
-  window.sendPrompt = (text) => parent.postMessage({ type: 'prompt', text: String(text) }, '*');
-})();
-</script>
+<script></script>
 </head>
 <body></body>
 </html>

@@ -4,7 +4,7 @@ Four things were measured while building this. Each says what was measured, how,
 
 ## 1. Compact HTML costs 15% fewer tokens than strict, and Markdown parity is a projection
 
-`go run ./cmd/tokencost -llama http://127.0.0.1:8081 -model <id>` tokenizes the same ten answers four ways with the model's own tokenizer:
+`bun run tokencost --llama http://127.0.0.1:8081 --model <id>` tokenizes the same ten answers four ways with the model's own tokenizer:
 
 | | tokens | vs Markdown | status |
 |---|---|---|---|
@@ -24,7 +24,7 @@ Caveats: ten answers from one model; token costs depend on the tokenizer, so re-
 
 ### A live comparison through the portable interface
 
-`cmd/conform sample` ran the same twelve prompts against the same local model (grammar on, thinking off), once per profile:
+`conform sample` ran the same twelve prompts against the same local model (grammar on, thinking off), once per profile:
 
 | profile | valid as emitted | cut off at 900 tokens | asked-for element present | total completion tokens |
 |---|---|---|---|---|
@@ -49,7 +49,7 @@ This is a size comparison, not a quality one. DOMPurify has years of review behi
 
 ## 4. Each safety layer, attacked alone
 
-`test/redteam/redteam.mjs` runs 32 attack documents (`conformance/cases/attack/`) against one layer at a time in a real browser, so a hole in one layer cannot hide behind the others. A positive control (the same documents as raw `innerHTML`, no defence) must show holes, or the run fails: it shows 22.
+`test/e2e/redteam.ts` runs 32 attack documents (`conformance/cases/attack/`) against one layer at a time in a real browser, so a hole in one layer cannot hide behind the others. A positive control (the same documents as raw `innerHTML`, no defence) must show holes, or the run fails: it shows 22.
 
 | layer | result |
 |---|---|
@@ -64,6 +64,6 @@ What it does not show: that the layers are independent (the sanitizer mirrors th
 
 ## Not shown
 
-- **That the grammar is necessary.** On twelve ordinary prompts the prompt-only arm produced valid subset HTML every time. The grammar guarantees that; this sample cannot show it is needed. That takes adversarial prompts and smaller models, and the conformance sampler (`cmd/conform sample`) is the tool for it.
+- **That the grammar is necessary.** On twelve ordinary prompts the prompt-only arm produced valid subset HTML every time. The grammar guarantees that; this sample cannot show it is needed. That takes adversarial prompts and smaller models, and the conformance sampler (`conform sample`) is the tool for it.
 - **That users prefer it.** A model judge (the same model, so not independent) preferred free Markdown to strict HTML 15 to 7 on 24 comparisons, which is not significant (p = 0.13). No people have rated anything.
 - **That it works with hosted models.** Everything above ran on a local model.

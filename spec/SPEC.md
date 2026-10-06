@@ -66,4 +66,4 @@ Defence in depth only helps where the layers fail independently. The grammar and
 
 ## Conformance
 
-`conformance/cases/` holds documents that must be accepted (`good`, `widgets`), documents that must be rejected (`bad`), and documents valid only in the compact profile (`compact`). `go run ./cmd/conform check` validates any file; `go run ./cmd/conform sample` asks a backend and reports how many answers conform as emitted.
+`conformance/cases/` holds documents that must be accepted (`good`, `widgets`), documents that must be rejected (`bad`), and documents valid only in the compact profile (`compact`). `bun run conform check` validates any file; `bun run conform sample` asks a backend and reports how many answers conform as emitted.
