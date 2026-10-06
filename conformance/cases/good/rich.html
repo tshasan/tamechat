@@ -1,0 +1,42 @@
+<h2>Setting up <code>llama-server</code></h2>
+<p>Build it with <kbd>cmake</kbd>, then run it. See the <a href="https://github.com/ggml-org/llama.cpp">repo</a> for details &amp; options.</p>
+<aside class="warn" role="note">
+<p>Grammars slow sampling a little; keep them <strong>small</strong>.</p>
+</aside>
+<ol start="2">
+<li>Install deps</li>
+<li>Build:
+<pre><code class="language-sh">cmake -B build &amp;&amp; cmake --build build -j
+if [ $x > 1 ]; then echo ok; fi
+</code></pre>
+</li>
+<li>Run, with nested items:
+<ul>
+<li><em>CPU</em> only</li>
+<li>GPU, with H<sub>2</sub>O<sup>*</sup> and <del>old</del> <mark>new</mark> flags</li>
+</ul>
+</li>
+</ol>
+<table>
+<caption>Model sizes</caption>
+<thead>
+<tr><th scope="col">Model</th><th scope="col">Params</th></tr>
+</thead>
+<tbody>
+<tr><td>Qwen3.5</td><td>2B</td></tr>
+<tr><td colspan="2">Merged cell</td></tr>
+</tbody>
+</table>
+<details>
+<summary>Why HTML?</summary>
+<p>One format from model to screen.</p>
+</details>
+<dl>
+<dt>QUIC</dt><dd>UDP-based transport under <abbr title="HTTP version 3">H3</abbr>.</dd>
+</dl>
+<blockquote><p>Quoted text.</p></blockquote>
+<hr>
+<menu>
+<li><button type="button" value="Show me the grammar">Show the grammar</button></li>
+<li><button type="button" value="Explain QUIC">Explain QUIC</button></li>
+</menu>

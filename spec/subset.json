@@ -1,0 +1,49 @@
+{
+  "version": "0.1",
+  "categories": {
+    "block": ["p", "h2", "h3", "h4", "ul", "ol", "blockquote", "pre", "hr", "table", "details", "dl", "aside", "menu"],
+    "phrasing": ["strong", "em", "sub", "sup", "del", "kbd", "mark", "small", "code", "a", "br", "abbr"]
+  },
+  "void": ["br", "hr"],
+  "optionalEnd": ["p", "li", "td", "th", "tr", "thead", "tbody", "dt", "dd"],
+  "content": {
+    "#root": ["@block"],
+    "p": ["#text", "@phrasing"], "h2": ["#text", "@phrasing"], "h3": ["#text", "@phrasing"], "h4": ["#text", "@phrasing"],
+    "strong": ["#text", "@phrasing"], "em": ["#text", "@phrasing"], "sub": ["#text", "@phrasing"], "sup": ["#text", "@phrasing"],
+    "del": ["#text", "@phrasing"], "kbd": ["#text", "@phrasing"], "mark": ["#text", "@phrasing"], "small": ["#text", "@phrasing"],
+    "code": ["#text"],
+    "a": ["#text", "code"],
+    "abbr": ["#text"],
+    "button": ["#text"],
+    "pre": ["code"],
+    "ul": ["li"], "ol": ["li"], "menu": ["li"],
+    "li": ["#text", "@phrasing", "ul", "ol", "p", "pre"],
+    "menu>li": ["button"],
+    "blockquote": ["@block"], "aside": ["@block"], "details": ["summary", "@block"],
+    "summary": ["#text", "@phrasing"],
+    "dl": ["dt", "dd"], "dt": ["#text", "@phrasing"], "dd": ["#text", "@phrasing"],
+    "table": ["caption", "thead", "tbody"], "caption": ["#text", "@phrasing"],
+    "thead": ["tr"], "tbody": ["tr"], "tr": ["th", "td"],
+    "th": ["#text", "@phrasing"], "td": ["#text", "@phrasing"]
+  },
+  "attributes": {
+    "a": { "href": "^(https://|mailto:|#)[^\"<>'` \\t\\n]+$" },
+    "abbr": { "title": "^[^\"<>&\\n]+$" },
+    "ol": { "start": "^[0-9]{1,4}$" },
+    "code": { "class": "^language-[a-z0-9+#_-]{1,20}$" },
+    "th": { "colspan": "^[1-9]$", "rowspan": "^[1-9]$", "scope": "^(col|row)$" },
+    "td": { "colspan": "^[1-9]$", "rowspan": "^[1-9]$" },
+    "aside": { "class": "^(note|tip|warn)$", "role": "^note$" },
+    "button": { "type": "^button$", "value": "^[^\"<>&\\n]+$" },
+    "template": { "data-widget": "^$", "title": "^[^\"<>&\\n]+$" }
+  },
+  "required": {
+    "strict": { "aside": ["class", "role"], "button": ["type", "value"] },
+    "compact": { "aside": ["class"], "button": ["value"] }
+  },
+  "implied": {
+    "aside": { "role": "note" },
+    "button": { "type": "button" },
+    "th": { "scope": "col in a thead, row for the first cell of a body row" }
+  }
+}

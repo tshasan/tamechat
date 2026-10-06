@@ -1,0 +1,14 @@
+<p>Drag the slider to see the payment.</p>
+<template data-widget title="Loan calculator"><style>
+label { display: block; } output { font-weight: 600; }
+</style>
+<label>Rate <input type="range" id="r" min="1" max="10" value="5"></label>
+<output id="o"></output>
+<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4"/></svg>
+<script>
+const r = document.getElementById('r'), o = document.getElementById('o');
+function upd() { const v = +r.value; o.textContent = v < 5 ? 'low' : 'high'; }
+r.addEventListener('input', upd); upd();
+</script>
+</template>
+<p>Ask if you want a different formula.</p>

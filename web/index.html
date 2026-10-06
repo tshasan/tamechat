@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>html-answers</title>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<header>
+  <h1>html-answers</h1>
+  <p id="backend" class="muted">connecting…</p>
+  <div class="controls">
+    <fieldset class="seg">
+      <legend>View</legend>
+      <label><input type="radio" name="view" value="rendered" checked> Rendered</label>
+      <label><input type="radio" name="view" value="source"> Source</label>
+    </fieldset>
+    <label>Theme <select id="theme"></select></label>
+    <button type="button" id="new-chat">New chat</button>
+  </div>
+</header>
+<main id="log" aria-live="polite">
+  <p id="empty" class="muted">Ask anything. The model answers in a small, safe subset of HTML; switch the view to see the source, or the theme to restyle it with plain classless CSS.</p>
+</main>
+<form id="composer">
+  <textarea id="input" rows="2" placeholder="Ask something" required></textarea>
+  <button id="send" type="submit">Send</button>
+  <button id="stop" type="button" hidden>Stop</button>
+</form>
+</body>
+</html>

@@ -1,0 +1,254 @@
+{
+  "S0": {
+    "label": "strict HTML (shipped)",
+    "n": 12,
+    "tokens_mean": 473.5833333333333,
+    "words_mean": 197.66666666666666,
+    "tok_per_word": 2.395868465430017,
+    "gen_s_mean": 12.571483916666667,
+    "tps": 37.71755593083411,
+    "runaway": 1,
+    "compliance": [
+      8,
+      10
+    ],
+    "violations": 0,
+    "judge": {
+      "arm": 0,
+      "tie": 0,
+      "base": 0
+    },
+    "judge_base": "S0"
+  },
+  "S1": {
+    "label": "tight HTML",
+    "n": 12,
+    "tokens_mean": 141.5,
+    "words_mean": 64.33333333333333,
+    "tok_per_word": 2.199481865284974,
+    "gen_s_mean": 3.7711999166666663,
+    "tps": 37.33208965097264,
+    "runaway": 0,
+    "compliance": [
+      5,
+      10
+    ],
+    "violations": 0,
+    "judge": {
+      "arm": 1,
+      "tie": 5,
+      "base": 18
+    },
+    "judge_base": "S0"
+  },
+  "S2": {
+    "label": "tight, end tags optional",
+    "n": 12,
+    "tokens_mean": 117.25,
+    "words_mean": 54.333333333333336,
+    "tok_per_word": 2.1579754601226995,
+    "gen_s_mean": 3.1353123333333333,
+    "tps": 37.091741345184154,
+    "runaway": 0,
+    "compliance": [
+      6,
+      10
+    ],
+    "violations": 0,
+    "judge": {
+      "arm": 1,
+      "tie": 1,
+      "base": 22
+    },
+    "judge_base": "S0"
+  },
+  "S3": {
+    "label": "tight, end tags forbidden",
+    "n": 12,
+    "tokens_mean": 298.75,
+    "words_mean": 73.66666666666667,
+    "tok_per_word": 4.0554298642533935,
+    "gen_s_mean": 8.221159,
+    "tps": 35.49998015054579,
+    "runaway": 2,
+    "compliance": [
+      7,
+      10
+    ],
+    "violations": 0,
+    "judge": {
+      "arm": 1,
+      "tie": 4,
+      "base": 19
+    },
+    "judge_base": "S0"
+  },
+  "D1": {
+    "label": "tight grammar, ORIGINAL prompt",
+    "n": 12,
+    "tokens_mean": 178.5,
+    "words_mean": 80.5,
+    "tok_per_word": 2.217391304347826,
+    "gen_s_mean": 4.811811583333333,
+    "tps": 36.789606551791614,
+    "runaway": 1,
+    "compliance": [
+      4,
+      10
+    ],
+    "violations": 0,
+    "judge": {
+      "arm": 1,
+      "tie": 8,
+      "base": 15
+    },
+    "judge_base": "S0"
+  },
+  "D2": {
+    "label": "strict grammar, COMPACT prompt",
+    "n": 12,
+    "tokens_mean": 286.3333333333333,
+    "words_mean": 104.08333333333333,
+    "tok_per_word": 2.7510008006405124,
+    "gen_s_mean": 7.697790249999999,
+    "tps": 37.21120238425536,
+    "runaway": 0,
+    "compliance": [
+      9,
+      10
+    ],
+    "violations": 0,
+    "judge": {
+      "arm": 4,
+      "tie": 5,
+      "base": 15
+    },
+    "judge_base": "S0"
+  },
+  "D5": {
+    "label": "strict + menu (control)",
+    "n": 12,
+    "tokens_mean": 510.3333333333333,
+    "words_mean": 203.41666666666666,
+    "tok_per_word": 2.5088078656288406,
+    "gen_s_mean": 13.712297583333333,
+    "tps": 37.181779478011116,
+    "runaway": 1,
+    "compliance": [
+      8,
+      10
+    ],
+    "violations": 0,
+    "judge": {
+      "arm": 2,
+      "tie": 20,
+      "base": 2
+    },
+    "judge_base": "S0"
+  },
+  "D3": {
+    "label": "tight + menu",
+    "n": 12,
+    "tokens_mean": 432.0833333333333,
+    "words_mean": 180.5,
+    "tok_per_word": 2.3938134810710987,
+    "gen_s_mean": 11.613089666666667,
+    "tps": 37.248715295565844,
+    "runaway": 1,
+    "compliance": [
+      10,
+      10
+    ],
+    "violations": 0,
+    "judge": {
+      "arm": 5,
+      "tie": 9,
+      "base": 10
+    },
+    "judge_base": "D5"
+  },
+  "D6": {
+    "label": "tight + menu, end tags optional",
+    "n": 12,
+    "tokens_mean": 432.0833333333333,
+    "words_mean": 180.5,
+    "tok_per_word": 2.3938134810710987,
+    "gen_s_mean": 11.859925333333333,
+    "tps": 36.692248148233496,
+    "runaway": 1,
+    "compliance": [
+      10,
+      10
+    ],
+    "violations": 0,
+    "judge": {
+      "arm": 5,
+      "tie": 9,
+      "base": 10
+    },
+    "judge_base": "D5"
+  },
+  "M1": {
+    "label": "Markdown under a grammar",
+    "n": 12,
+    "tokens_mean": 210.25,
+    "words_mean": 135.75,
+    "tok_per_word": 1.5488029465930018,
+    "gen_s_mean": 5.549328833333333,
+    "tps": 37.923874522161455,
+    "runaway": 0,
+    "compliance": [
+      9,
+      10
+    ],
+    "violations": 0,
+    "judge": {
+      "arm": 7,
+      "tie": 5,
+      "base": 12
+    },
+    "judge_base": "S0"
+  },
+  "M2": {
+    "label": "free Markdown (no grammar)",
+    "n": 12,
+    "tokens_mean": 308.75,
+    "words_mean": 178.58333333333334,
+    "tok_per_word": 1.7288847410172654,
+    "gen_s_mean": 8.17532525,
+    "tps": 37.81533481252489,
+    "runaway": 0,
+    "compliance": [
+      7,
+      10
+    ],
+    "violations": 1,
+    "judge": {
+      "arm": 15,
+      "tie": 2,
+      "base": 7
+    },
+    "judge_base": "S0"
+  },
+  "H": {
+    "label": "free HTML (prompt only)",
+    "n": 12,
+    "tokens_mean": 469.0,
+    "words_mean": 203.75,
+    "tok_per_word": 2.301840490797546,
+    "gen_s_mean": 12.420383416666665,
+    "tps": 37.74977365338479,
+    "runaway": 2,
+    "compliance": [
+      7,
+      10
+    ],
+    "violations": 0,
+    "judge": {
+      "arm": 3,
+      "tie": 16,
+      "base": 5
+    },
+    "judge_base": "S0"
+  }
+}

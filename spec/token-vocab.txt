@@ -1,0 +1,45 @@
+# Candidate single-token vocabulary for the compact profile.
+#
+# One entry per line. An entry ending in " or - is a prefix: the tag up to that point would be one
+# token, and the attribute value after it is tokenized as usual. `tokencost` reads this file to
+# PROJECT what the compact profile would cost if a tokenizer treated these as single tokens.
+#
+# How it was chosen: 53 real answers from Qwen3.6-35B-A3B were tokenized with that model's tokenizer
+# (experiments/token-vocab in the history of this project). Each tag form was ranked by uses x
+# (tokens it costs today - 1), in the compact profile's spelling (no scope, role or type, and the
+# optional end tags gone). The top 32 forms capture ~95% of the achievable saving; forms below
+# that save almost nothing and would get too few training examples to learn a good embedding.
+#
+# Costs depend on the tokenizer. Re-rank for yours before relying on this list.
+</strong>
+</code>
+<code>
+<strong>
+<li>
+</h3>
+<p>
+<td>
+</em>
+<em>
+</button>
+<button value="
+<h3>
+<code class="language-
+</h2>
+<br>
+<aside class="note">
+</menu>
+<menu>
+<tr>
+</pre>
+</ul>
+<th>
+</aside>
+<h2>
+<aside class="warn">
+<pre>
+<ul>
+</table>
+</h4>
+<aside class="tip">
+<table>

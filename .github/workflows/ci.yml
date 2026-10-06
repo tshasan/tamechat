@@ -1,0 +1,33 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.22' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: gofmt
+        run: test -z "$(gofmt -l .)"
+      - run: go vet ./...
+      - run: go test ./...
+      - run: node --test web/scanner.test.js
+      - name: the committed grammars match the generator
+        run: python3 grammar/make_grammar.py && git diff --exit-code grammar
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.22' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: npm i playwright && npx playwright install --with-deps chromium
+      - name: run the demo against a fake backend
+        run: |
+          python3 test/e2e/fakebackend.py 8099 &
+          FAKE_KEY=k go run ./cmd/serve -addr 127.0.0.1:8090 -backend http://127.0.0.1:8099/v1 -model fake -key-env FAKE_KEY &
+          sleep 8
+          FAKE_KEY=k node test/e2e/e2e.mjs
