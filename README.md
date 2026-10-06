@@ -40,14 +40,14 @@ bun run conform check [--profile compact] answer.html
 
 ## The standard is the test suite
 
-`conformance/manifest.json` lists 58 documents (32 attacks) with the expected verdict per profile. An implementation in any language can run it. Prose spec: [spec/SPEC.md](spec/SPEC.md), generated from `spec/subset.json`.
+`conformance/manifest.json` lists 58 documents (32 attacks) with the expected verdict per profile. An implementation in any language can run it. Prose spec: [spec/SPEC.md](spec/SPEC.md), checked against `spec/subset.json` by a test.
 
 ## What holds, what does not
 
 | | |
 |---|---|
 | Safety | Validator, sanitizer, CSP and widget sandbox, each attacked alone in a browser with 32 attack documents. The sanitizer mirrors the grammar, so those two fail together; CSP and sandbox are independent. [Details](findings/README.md). |
-| Cost | Markdown is cheaper per word today (HTML about 1.4×). Compact HTML is 15% cheaper than strict on identical content. This project does not claim to be cheaper. |
+| Cost | Markdown is cheaper per word today (HTML about 1.4×). Compact HTML is 15% cheaper than strict on identical content. This project makes no claim to be cheaper. |
 | Hosted models | Not tested. Only a local model and a fake backend. |
 | User preference | Not tested. |
 

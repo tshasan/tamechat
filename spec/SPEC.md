@@ -1,8 +1,8 @@
 # The HTML subset, version 0.1
 
-A model's answer is a **fragment of HTML** that uses only the elements and attributes below, written in one of two profiles. This page is the whole specification. `subset.json` is the same definition in machine-readable form, and everything in this repository is generated from it or tested against it.
+A model's answer is a **fragment of HTML** that uses only the elements and attributes below, written in one of two profiles. This page is the whole specification. `subset.json` is the same definition in machine-readable form. The validator and sanitizer read it, and a test checks the grammars against it.
 
-The aim is a UI layer that any model, any backend and any client can share without an SDK: the answer is ordinary HTML text, so a browser can show it with no client code at all.
+Any model, backend or client can share this UI layer without an SDK. The answer is ordinary HTML text, so a browser shows it with no client code.
 
 ## Elements
 
