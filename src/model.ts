@@ -9,13 +9,24 @@ export interface Backend {
   extra: Record<string, unknown>;
 }
 
-export function chatModel(b: Backend): LanguageModel {
+// onBody receives each parsed JSON response body. The SDK drops fields it doesn't model, such as
+// OpenRouter's `provider` and `usage.cost`. Only for non-streaming calls: the clone is read in full.
+export function chatModel(b: Backend, onBody?: (body: unknown) => void): LanguageModel {
   const provider = createOpenAICompatible({
     name: 'tamechat',
     baseURL: b.baseURL.replace(/\/+$/, ''),
     apiKey: b.apiKey || undefined,
     includeUsage: true,
     transformRequestBody: (body) => ({ ...b.extra, ...body, ...(b.grammar ? { grammar: b.grammar } : {}) }),
+    ...(onBody
+      ? {
+          fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+            const res = await fetch(input, init);
+            onBody(await res.clone().json().catch(() => undefined));
+            return res;
+          },
+        }
+      : {}),
   });
   return provider.chatModel(b.model);
 }

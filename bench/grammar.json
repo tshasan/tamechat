@@ -1,0 +1,14 @@
+{
+  "seeds": 3,
+  "seedBase": 1000,
+  "profiles": ["strict", "compact"],
+  "maxTokens": 900,
+  "temperature": 0.7,
+  "budgetUsd": 0,
+  "runs": [
+    { "label": "qwen3.6-35b", "backend": "https://REPLACE-qwen3-6-35b.modal.run/v1", "model": "qwen3.6-35b", "keyEnv": "LLAMA_API_KEY", "price": { "inputPerMTok": 0, "outputPerMTok": 0 } },
+    { "label": "qwen3.6-35b+grammar", "backend": "https://REPLACE-qwen3-6-35b.modal.run/v1", "model": "qwen3.6-35b", "keyEnv": "LLAMA_API_KEY", "grammar": true, "price": { "inputPerMTok": 0, "outputPerMTok": 0 } },
+    { "label": "gemma-4-12b", "backend": "https://REPLACE-gemma-4-12b.modal.run/v1", "model": "gemma-4-12b", "keyEnv": "LLAMA_API_KEY", "price": { "inputPerMTok": 0, "outputPerMTok": 0 } },
+    { "label": "gemma-4-12b+grammar", "backend": "https://REPLACE-gemma-4-12b.modal.run/v1", "model": "gemma-4-12b", "keyEnv": "LLAMA_API_KEY", "grammar": true, "price": { "inputPerMTok": 0, "outputPerMTok": 0 } }
+  ]
+}

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { sample, type Prompt } from '../src/conform.ts';
 import { backendFrom, backendOptions } from '../src/backendFlags.ts';
@@ -6,7 +6,7 @@ import { subset, type Profile } from '../src/subset.ts';
 import { describe, validate } from '../src/validate.ts';
 
 const usage = `usage: conform check [--profile strict|compact] [--widgets] FILE...
-       conform sample --backend URL --model NAME [--profile ...] [--prompts FILE] [--n N] [--grammar FILE] [--key-env VAR] [--extra JSON]`;
+       conform sample --backend URL --model NAME [--profile ...] [--prompts FILE] [--n N] [--grammar FILE] [--key-env VAR] [--extra JSON] [--seed N] [--out answers.jsonl]`;
 
 function die(message: string): never {
   console.error(message);
@@ -52,12 +52,15 @@ async function runSample(args: string[]): Promise<number> {
       'max-tokens': { type: 'string', default: '900' },
       temp: { type: 'string', default: '0.7' },
       label: { type: 'string', default: '' },
+      seed: { type: 'string', default: '' },
+      out: { type: 'string', default: '' },
       v: { type: 'boolean', default: false },
     },
   });
   const promptsFile = values.prompts || new URL('../corpus/prompts.json', import.meta.url);
   const prompts = JSON.parse(readFileSync(promptsFile, 'utf8')) as Prompt[];
-  const report = await sample(
+  if (values.out) writeFileSync(values.out, '');
+  const { report } = await sample(
     {
       backend: backendFrom(values),
       profile: profileOf(values.profile),
@@ -67,8 +70,12 @@ async function runSample(args: string[]): Promise<number> {
       temperature: Number(values.temp),
       label: values.label,
       verbose: values.v,
+      ...(values.seed ? { seed: Number(values.seed) } : {}),
     },
     console.log,
+    (r) => {
+      if (values.out) appendFileSync(values.out, `${JSON.stringify(r)}\n`);
+    },
   );
   console.log(report);
   return 0;

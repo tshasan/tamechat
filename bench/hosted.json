@@ -1,0 +1,71 @@
+{
+  "seeds": 3,
+  "seedBase": 1000,
+  "profiles": [
+    "strict",
+    "compact"
+  ],
+  "formats": [
+    "html",
+    "markdown"
+  ],
+  "maxTokens": 900,
+  "temperature": 0.7,
+  "budgetUsd": 8,
+  "runs": [
+    {
+      "label": "claude-haiku-5.5",
+      "backend": "https://openrouter.ai/api/v1",
+      "model": "anthropic/claude-haiku-5.5",
+      "keyEnv": "OPENROUTER_API_KEY"
+    },
+    {
+      "label": "claude-sonnet-5.5",
+      "backend": "https://openrouter.ai/api/v1",
+      "model": "anthropic/claude-sonnet-5.5",
+      "keyEnv": "OPENROUTER_API_KEY"
+    },
+    {
+      "label": "gpt-6-luna",
+      "backend": "https://openrouter.ai/api/v1",
+      "model": "openai/gpt-6-luna",
+      "keyEnv": "OPENROUTER_API_KEY"
+    },
+    {
+      "label": "gpt-6.1-terra",
+      "backend": "https://openrouter.ai/api/v1",
+      "model": "openai/gpt-6.1-terra",
+      "keyEnv": "OPENROUTER_API_KEY"
+    },
+    {
+      "label": "gemini-3.8-flash",
+      "backend": "https://openrouter.ai/api/v1",
+      "model": "google/gemini-3.8-flash",
+      "keyEnv": "OPENROUTER_API_KEY"
+    },
+    {
+      "label": "deepseek-v4.1-flash",
+      "backend": "https://openrouter.ai/api/v1",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "keyEnv": "OPENROUTER_API_KEY"
+    },
+    {
+      "label": "qwen3.8-flash",
+      "backend": "https://openrouter.ai/api/v1",
+      "model": "qwen/qwen3.8-flash",
+      "keyEnv": "OPENROUTER_API_KEY"
+    },
+    {
+      "label": "mistral-large-4",
+      "backend": "https://openrouter.ai/api/v1",
+      "model": "mistralai/mistral-large-4-0",
+      "keyEnv": "OPENROUTER_API_KEY"
+    },
+    {
+      "label": "glm-5.3-flash",
+      "backend": "https://openrouter.ai/api/v1",
+      "model": "z-ai/glm-5.3-flash",
+      "keyEnv": "OPENROUTER_API_KEY"
+    }
+  ]
+}
