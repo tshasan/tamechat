@@ -1,6 +1,6 @@
 # I ran 32 attacks against four ways to render AI-written HTML
 
-I took 32 known tricks for getting code to run through HTML and fed them to four ways of showing a model's answer in a browser. With no defense, 22 attacks worked. DOMPurify, the browser's built-in `setHTML()` and my own 5 KB renderer stopped all 32. Then I fed each one nine valid documents and checked what came out.
+I took 32 known tricks for getting code to run through HTML and fed them to four ways of showing a model's answer in a browser. With no defense, 10 attacks worked. DOMPurify, the browser's built-in `setHTML()` and my own 5 KB renderer stopped all 32. Then I fed each one nine valid documents and checked what came out.
 
 | tool | attacks contained | valid documents kept intact |
 |---|---|---|
@@ -50,7 +50,7 @@ Testing found two bugs, both fixed with tests. The filter and the model rules co
 
 I wanted shorter answers, so I banned the newline between blocks in the grammar. Answers got cut off instead. The median fell from 452 tokens to 45, and 8 of 12 answers ran under 60 tokens.
 
-The model strongly prefers a newline after a paragraph. Remove that option and its probability moves to the other choices, and "end of answer" takes a large share. Banning the optional closing tags was worse: the model repeated junk until it hit the limit. Published research describes the same effect ([Grammar-Aligned Decoding](https://arxiv.org/html/2405.21047v3)).
+The model strongly prefers a newline after a paragraph. Remove that option and its probability moves to the other choices, and "end of answer" takes a large share. Banning the optional closing tags was worse: the model repeated junk until it hit the limit. Grammar-Aligned Decoding ([Park et al., 2024](https://arxiv.org/abs/2405.21047)) shows that grammar constraints distort a model's distribution in general; I couldn't find this specific failure, answers ending early, written up.
 
 It applies to any constrained output. If you use grammars or structured output, measure answer length along with validity. My fix was to allow the compact forms and stop forcing them.
 
@@ -64,13 +64,13 @@ It applies to any constrained output. If you use grammars or structured output, 
 
 ## What it costs
 
-On one local model, with 12 questions and one answer each, HTML used 2.4 tokens per word and Markdown used 1.7. That is about 1.4 times as many. Other write-ups report 2 to 3 times, but they compare whole web pages, and this list has no styling or scripts. Writing tokens is the slow part, so for the same content Markdown is faster. HTML draws faster on the page, 16 ms against 93 ms per thousand characters, which does not make up for the writing time.
+On one local model, with 12 questions and one answer each, HTML used 2.4 tokens per word and Markdown used 1.7. That is about 1.4 times as many. Other write-ups report 2 to 3 times, but they compare whole web pages, and this list has no styling or scripts. Writing tokens is the slow part, so for the same content Markdown is faster. HTML draws faster on the page, 16 ms against 93 ms per thousand characters on one 12-prompt run ([findings/render-timing](../findings/render-timing/run1.txt)), which does not make up for the writing time.
 
 A compact mode drops the closing tags HTML lets you skip. It saves 15% on identical content, and I measured that. If a model gave common tags one token each, the cost would drop to about 0.98 times Markdown. That number is a projection. No shipping model does this, and only people who control a model's weights can try.
 
 ## What I haven't shown
 
-- **That people prefer it.** Nobody has rated anything. A model judge, which is not independent, preferred Markdown 15 to 7. One study found people preferred richer generated interfaces to Markdown 82.8% of the time ([paper](https://arxiv.org/pdf/2604.09577)), but those interfaces did more than this list allows. If real users prefer Markdown, I drop the claim that it looks better and keep the safety suite.
+- **That people prefer it.** Nobody has rated anything. A model judge, which is not independent, preferred Markdown 15 to 7. One study reports that people "overwhelmingly preferred" its generated interfaces to standard Markdown output ([paper](https://arxiv.org/abs/2604.09577)), but those interfaces did more than this list allows. If real users prefer Markdown, I drop the claim that it looks better and keep the safety suite.
 - **That it works on hosted models.** I ran one local model and a fake one. If fewer than 90% of answers follow the rules across three hosted services, I stop saying it works without a steering grammar.
 - **That the tokenizer idea works.** If training on compact answers doesn't cut tokens, I drop that argument.
 - **That the filter is sound.** If you get a script to run through it, I fix it and publish the fix first.

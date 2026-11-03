@@ -12,4 +12,4 @@ What produced the numbers in [README.md](README.md), so they can be checked or r
 | Run dates | October 2026 |
 | Token counts | the server's own `/tokenize` for that model (`bin/tokencost.ts`), not an approximation |
 
-Not recorded: the exact sampler seed values, and the order the arms were run in.
+Seeds: `grammar-shapes/` used seed `1000 + i` for prompt *i* in every arm (set in the original experiment script, `bench.py`, which predates this repo; the answers file doesn't repeat it). Not recorded: the order the arms were run in.

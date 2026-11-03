@@ -3,12 +3,16 @@ import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
 import { build } from 'esbuild';
-import { chromium } from 'playwright';
+import { chromium, firefox, webkit } from 'playwright';
 import type { Tool } from '../test/compare/harness.ts';
 
 const root = join(import.meta.dirname, '..');
 const cases = join(root, 'conformance', 'cases');
-const jsonOut = process.argv.includes('--json') ? process.argv[process.argv.indexOf('--json') + 1] : undefined;
+const arg = (flag: string) => (process.argv.includes(flag) ? process.argv[process.argv.indexOf(flag) + 1] : undefined);
+const jsonOut = arg('--json');
+const engineName = arg('--engine') ?? 'chromium';
+const engine = { chromium, firefox, webkit }[engineName];
+if (!engine) throw new Error('--engine must be chromium, firefox or webkit');
 
 function load(dir: string) {
   return readdirSync(join(cases, dir))
@@ -25,6 +29,7 @@ const labels: Record<Tool, string> = {
   escape: 'escape everything',
   purify: 'DOMPurify default',
   native: 'browser setHTML()',
+  'native-chat': 'setHTML() + 3 elements',
   tamechat: 'tamechat renderer',
 };
 
@@ -39,7 +44,7 @@ const server = createServer((req, res) => {
 await new Promise((r) => server.once('listening', r));
 const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
 
-const browser = await chromium.launch();
+const browser = await engine.launch();
 const context = await browser.newContext();
 const tab = await context.newPage();
 const hits: string[] = [];
@@ -60,7 +65,7 @@ async function fresh() {
 await fresh();
 
 const nativeSupported = await tab.evaluate(() => window.nativeSupported);
-const tools = (Object.keys(labels) as Tool[]).filter((t) => t !== 'native' || nativeSupported);
+const tools = (Object.keys(labels) as Tool[]).filter((t) => !t.startsWith('native') || nativeSupported);
 const version = browser.version();
 
 type Row = { tool: Tool; held: number; failed: string[]; textKept: number; tagsKept: number };
@@ -109,7 +114,7 @@ await browser.close();
 server.close();
 
 const pad = (s: string, n: number) => s.padEnd(n);
-console.log(`\nChromium ${version}, ${attacks.length} attacks, ${documents.length} valid documents\n`);
+console.log(`\n${engineName} ${version}, ${attacks.length} attacks, ${documents.length} valid documents\n`);
 console.log(`| ${pad('tool', 22)} | ${pad('attacks contained', 17)} | ${pad('text kept', 9)} | ${pad('structure kept', 14)} |`);
 console.log(`|${'-'.repeat(24)}|${'-'.repeat(19)}|${'-'.repeat(11)}|${'-'.repeat(16)}|`);
 for (const r of rows) {
@@ -123,4 +128,4 @@ for (const r of rows) {
   }
 }
 
-if (jsonOut) writeFileSync(jsonOut, `${JSON.stringify({ browser: version, attacks: attacks.length, documents: documents.length, rows }, null, 2)}\n`);
+if (jsonOut) writeFileSync(jsonOut, `${JSON.stringify({ engine: engineName, browser: version, attacks: attacks.length, documents: documents.length, rows }, null, 2)}\n`);

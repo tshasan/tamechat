@@ -4,7 +4,7 @@ A test suite for rendering AI-written HTML, and a small chat app that passes it.
 
 ## The problem
 
-When an AI model writes an answer, your app has to show it. If the answer is HTML, it can carry code that steals data or sends the page somewhere else. We tested 32 known tricks against a page with no defense. 22 of them worked.
+When an AI model writes an answer, your app has to show it. If the answer is HTML, it can carry code that steals data or sends the page somewhere else. We wrote 32 attacks and ran them against a page with no defense. 10 of them worked: 6 ran a script, 3 sent a request to another site and 1 navigated the page away.
 
 So every chat app needs a rule for what HTML it will accept. Today each app invents its own, and nobody can check it against anyone else's.
 
@@ -17,13 +17,17 @@ So every chat app needs a rule for what HTML it will accept. Today each app inve
 
 ## Compare sanitizers
 
+You need [Bun](https://bun.sh) 1.2 or newer.
+
 ```sh
+bun install
+bunx playwright install chromium firefox webkit
 bun run compare
 ```
 
 This runs the 32 attacks and the 9 valid documents through each tool in headless Chromium and prints a table. "Attacks contained" means no script ran, no request left the page and the page did not navigate. "Text kept" and "structure kept" check that a valid document comes out the same, because a tool that deletes everything is safe and useless. `escape everything` is in the table to show that.
 
-Result on Chromium 153:
+Result on Chromium 153 (`bun run compare --engine firefox` or `webkit` for the others):
 
 | tool | attacks contained | text kept | structure kept |
 |---|---|---|---|
@@ -31,13 +35,20 @@ Result on Chromium 153:
 | escape everything | 32/32 | 0/9 | 0/9 |
 | DOMPurify default | 32/32 | 9/9 | 9/9 |
 | browser `setHTML()` | 32/32 | 7/9 | 7/9 |
+| `setHTML()` allowing `details`, `summary`, `button` | 32/32 | 9/9 | 9/9 |
 | tamechat renderer | 32/32 | 9/9 | 9/9 |
 
-`setHTML()` and DOMPurify are both safe here. `setHTML()` with its default settings removes `<button>` and `<details>`, so suggested replies and collapsible sections disappear. DOMPurify keeps them. The attacks were written against this project, so a pass shows the tool handles these 32 and nothing more.
+Firefox 155 gives the same rows. WebKit 26.6 has no `setHTML()`, and DOMPurify and the tamechat renderer give the same rows there. With no defence, Firefox and WebKit contain 23 of 32; which attacks get through differs by engine, and the harness's short wait may account for some of that, so it isn't reported as a finding yet.
+
+`setHTML()` and DOMPurify are both safe here. `setHTML()` with its default settings removes `<details>`, `<summary>` and `<button>` together with the text inside them, so suggested replies and collapsible sections disappear. It also removes every `class` attribute, which drops code-block languages (`language-go`) and callout styling. Chromium 153 and Firefox 155 behave the same; WebKit 26.6 has no `setHTML()`. DOMPurify keeps all of it. Allowing those three elements in `setHTML()`'s config gives 32/32 and 9/9. The attacks were written against this project, so a pass shows the tool handles these 32 and nothing more.
 
 ## What would count as success
 
 Someone else writes their own renderer and it passes the test suite. Until that happens, this is one person's project. After it, it is a standard.
+
+## Benchmark many models in three browsers
+
+`bun run matrix` asks a list of models (hosted ones through OpenRouter, open ones on llama.cpp with the grammar) the same prompts with fixed seeds and stores every answer as JSON. `bun run render` then renders every stored answer in Chromium, Firefox and WebKit and checks what each renderer kept, whether streaming changes the result, and whether the engines agree. See [bench/README.md](bench/README.md).
 
 ## Check your own model
 
@@ -87,7 +98,7 @@ If a grammar bans a token the model really wants, the model stops early. We bann
 | Safety | Four layers of defense, each attacked alone in a real browser. Two layers share a source, so they can fail together. A second reviewer is still needed. |
 | Cost | HTML uses about 1.4 times the tokens of Markdown, so it is slower and costs more per word. A compact mode saves 15%. We don't claim HTML is cheaper. |
 | Interactive widgets | Optional, and less safe than the rest. Turn them on only for models you trust. |
-| Hosted models | Not tested. Only one local model. |
+| Hosted models | Not tested yet. Only one local model so far; `bench/hosted.json` lists nine hosted models to run. |
 | Do people like it | Not tested. A model judge preferred Markdown, and it is not an independent judge. |
 
 ## What would prove this wrong
@@ -95,7 +106,7 @@ If a grammar bans a token the model really wants, the model stops early. We bann
 | If this happens | We do this |
 |---|---|
 | Someone gets a script to run through the filter | Fix it first and tell everyone |
-| Fewer than 90% of answers follow the rules on three hosted models | Stop saying it works without a grammar |
+| Fewer than 90% of answers follow the rules on three hosted models | Stop saying it works without a grammar. On one local model the prompt alone gave 7 of 12 ([findings](findings/README.md#not-shown)), so this one is open |
 | People prefer Markdown to styled HTML | Drop the claim that it looks better. Keep the safety suite. |
 | Training a model on compact answers doesn't cut tokens | Drop the tokenizer idea |
 
@@ -123,6 +134,9 @@ If a grammar bans a token the model really wants, the model stops early. We bann
 | `bin/` | Command-line tools |
 | `grammar/` | Generated grammar files |
 | `findings/` | Measurements and how far to trust them |
+| `bench/` | Model lists for the multi-model benchmark, and how to run it |
+| `modal/` | llama-server on a Modal GPU, for the grammar runs |
+| `runs/` | Stored benchmark answers and render results, one folder per run |
 
 ```sh
 bun run typecheck

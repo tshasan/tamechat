@@ -1,0 +1,51 @@
+$ bun run build && bun bin/bench.ts --backend "http://127.0.0.1:8081/v1" --model "Qwen3.6-35B-A3B-UD-IQ4_XS" --profile compact --extra "{\"chat_template_kwargs\":{\"enable_thinking\":false}}" --n "1" --out "traces/run1.jsonl" --trace-file "traces/spans1.jsonl"
+$ bun scripts/build.ts
+rep 1 prompt  0 html     first token 7627 ms, render 29 ms, 261 tokens
+rep 1 prompt  0 markdown first token 1252 ms, render 230 ms, 475 tokens
+rep 1 prompt  1 markdown first token 1094 ms, render 343 ms, 727 tokens
+rep 1 prompt  1 html     first token 632 ms, render 45 ms, 532 tokens
+rep 1 prompt  2 html     first token 252 ms, render 30 ms, 552 tokens
+rep 1 prompt  2 markdown first token 760 ms, render 504 ms, 865 tokens
+rep 1 prompt  3 markdown first token 483 ms, render 17 ms, 101 tokens
+rep 1 prompt  3 html     first token 400 ms, render 5 ms, 119 tokens
+rep 1 prompt  4 html     first token 183 ms, render 8 ms, 157 tokens
+rep 1 prompt  4 markdown first token 289 ms, render 65 ms, 292 tokens
+rep 1 prompt  5 markdown first token 241 ms, render 237 ms, 594 tokens
+rep 1 prompt  5 html     first token 709 ms, render 10 ms, 182 tokens
+rep 1 prompt  6 html     first token 181 ms, render 19 ms, 243 tokens
+rep 1 prompt  6 markdown first token 433 ms, render 172 ms, 425 tokens
+rep 1 prompt  7 markdown first token 568 ms, render 8 ms, 76 tokens
+rep 1 prompt  7 html     first token 697 ms, render 2 ms, 53 tokens
+rep 1 prompt  8 html     first token 199 ms, render 12 ms, 308 tokens
+rep 1 prompt  8 markdown first token 281 ms, render 131 ms, 414 tokens
+rep 1 prompt  9 markdown first token 273 ms, render 155 ms, 373 tokens
+rep 1 prompt  9 html     first token 816 ms, render 76 ms, 698 tokens
+rep 1 prompt 10 html     first token 333 ms, render 14 ms, 324 tokens
+rep 1 prompt 10 markdown first token 1000 ms, render 153 ms, 384 tokens
+rep 1 prompt 11 markdown first token 707 ms, render 158 ms, 470 tokens
+rep 1 prompt 11 html     first token 458 ms, render 40 ms, 366 tokens
+
+html: 12 answers, markdown: 12 answers
+
+| metric (median / p95) | html | markdown |
+|---|---|---|
+| first token (ms) | 429.0 / 3881.0 | 525.3 / 1165.4 |
+| first content on screen (ms) | 489.4 / 3964.3 | 548.4 / 1174.9 |
+| stream done (ms) | 8506.2 / 16784.8 | 11250.3 / 21809.2 |
+| render time, all frames (ms) | 16.5 / 59.0 | 156.6 / 415.5 |
+| worst frame render (ms) | 0.2 / 0.7 | 0.9 / 6.5 |
+| frames rendered | 284.5 / 617.7 | 418.0 / 784.0 |
+| long tasks | 0.0 / 0.0 | 0.0 / 0.0 |
+| long task time (ms) | 0.0 / 0.0 | 0.0 / 0.0 |
+| characters | 1035.0 / 1932.8 | 1884.5 / 3039.6 |
+| words | 93.0 / 215.1 | 235.0 / 392.8 |
+| output tokens | 284.5 / 617.7 | 419.5 / 789.1 |
+| tokens per word | 2.4 / 5.1 | 1.7 / 2.1 |
+| render ms per 1k characters | 15.9 / 43.5 | 93.3 / 139.8 |
+| DOM elements | 24.0 / 64.2 | 55.5 / 98.8 |
+
+client code needed to render and sanitize, minified (gzipped):
+  html:     5182 bytes (2137)
+  markdown: 76408 bytes (25739), marked + DOMPurify
+cpu slowdown: 1x
+exit 0

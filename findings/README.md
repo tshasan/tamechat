@@ -35,7 +35,7 @@ The one strict answer that failed validation hit the token limit and left unclos
 
 ## 2. A grammar that bans the model's preferred token makes it stop early
 
-Forbidding the newline between blocks in the grammar made answers short instead of compact. The median answer fell from 452 tokens and 7.5 blocks to **45 tokens and 1 block**, and 8 of 12 answers ran under 60 tokens. The model strongly prefers a newline after `</p>`. Masking it hands that probability to the other choices, and end-of-sequence takes a large share. Forbidding the optional end tags outright was worse: the untrained model degenerated into `<th>Feature<br>Go<br>Rust…` until the token limit.
+Forbidding the newline between blocks in the grammar made answers short instead of compact. The median answer fell from 452 tokens to **45 tokens**, and 8 of 12 answers ran under 60 tokens. Because the arms share a seed per prompt, the two answers are byte-identical up to the first point where the shipped arm wrote a newline; in 7 of 11 multi-block prompts the tight arm ended there. The model strongly prefers a newline after `</p>`. Masking it hands that probability to the other choices, and end-of-sequence takes a large share. Forbidding the optional end tags outright was worse: inside a table the grammar allowed no way to finish, and two answers ran to the token limit as `<th>Feature<br>Language<th>Speed…<br><br><br>` and `<th>Day Focus<br>Session Type<br>Duration<br>Notes<br>Notes<br>Notes…`.
 
 A grammar that **allows** the compact forms without **forcing** them (`grammar/compact.gbnf`), plus an instruction in the prompt, worked. Requiring the answer to end with a `<menu>` also removed the early exit, but I would not ship that.
 
@@ -49,7 +49,7 @@ This compares size and says nothing about quality. DOMPurify has years of review
 
 ## 4. Each safety layer, attacked alone
 
-`test/e2e/redteam.ts` runs 32 attack documents (`conformance/cases/attack/`) against one layer at a time in a real browser, so a hole in one layer cannot hide behind the others. A positive control (the same documents as raw `innerHTML`, no defence) must show holes, or the run fails: it shows 22.
+`test/e2e/redteam.ts` runs 32 attack documents (`conformance/cases/attack/`) against one layer at a time in a real browser, so a hole in one layer cannot hide behind the others. A positive control (the same documents as raw `innerHTML`, no defence) must show holes, or the run fails: it shows 22. This count is stricter than `bun run compare`: it also counts an event handler or `javascript:` URL left in the DOM, which 12 documents leave without anything running. Counting only a script that ran, a request that left or a navigation, 10 of 32 get through.
 
 | layer | result |
 |---|---|
@@ -64,6 +64,6 @@ The run does not show that the layers are independent (the sanitizer mirrors the
 
 ## Not shown
 
-- **That the grammar is necessary.** On twelve ordinary prompts the prompt-only arm produced valid subset HTML every time. This sample cannot show the grammar is needed. Adversarial prompts and smaller models can, and `conform sample` runs them.
+- **That the grammar is necessary, for safety.** An earlier version of this file said the prompt-only arm produced valid subset HTML every time. That used the experiment's original check, which looked only at tag and attribute names. Under the current validator (`src/validate.ts`, strict profile), 5 of 12 prompt-only answers break the subset: 2 ran to the token limit, and 3 broke structure rules, with bare text or `<strong>` directly inside `<aside>`, or text outside any element. The grammar arms fail only when an answer hits the token limit. None of the failures was unsafe, and the renderer displayed every word of them. So on this sample the grammar is needed for structure, not for safety. `bench/` runs the same check on hosted models.
 - **That users prefer it.** A model judge (the same model, so not independent) preferred free Markdown to strict HTML 15 to 7 on 24 comparisons (p = 0.13, not significant). No person has rated anything.
 - **That it works with hosted models.** Everything above ran on a local model.
